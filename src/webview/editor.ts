@@ -13,11 +13,13 @@ import Underline from '@tiptap/extension-underline';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { common, createLowlight } from 'lowlight';
 import { Markdown } from 'tiptap-markdown';
 import Callout from './extensions/callout';
 import Toggle from './extensions/toggle';
 import { createBubbleMenu } from './bubbleMenu';
+import { createBlockHandle } from './blockHandle';
 
 const lowlight = createLowlight(common);
 
@@ -51,6 +53,7 @@ export function createEditor(
       Markdown.configure({ transformCopiedText: true }),
       Callout,
       Toggle,
+      GlobalDragHandle.configure({ dragHandleWidth: 48 }),
     ],
     content: initialMarkdown,
     onUpdate({ editor }) {
@@ -63,6 +66,7 @@ export function createEditor(
   });
 
   createBubbleMenu(_editor);
+  createBlockHandle(_editor);
   return _editor;
 }
 
