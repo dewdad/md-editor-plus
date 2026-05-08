@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "sourceMap": true
   },
-  "include": ["src/extension.ts", "src/notionEditorProvider.ts"],
+  "include": ["src/*.ts"],
   "exclude": ["src/webview/**", "node_modules", "dist"]
 }

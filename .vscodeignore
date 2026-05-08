@@ -2,8 +2,11 @@
 src/**
 tests/**
 node_modules/**
+dist-webview/**
 *.map
 tsconfig*.json
 esbuild.config.js
 .gitignore
+.superpowers/**
+package-lock.json
 docs/**
