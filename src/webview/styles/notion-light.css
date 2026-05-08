@@ -1,0 +1,23 @@
+:root {
+  --bg: #ffffff;
+  --bg-secondary: #f7f6f3;
+  --text-primary: #37352f;
+  --text-secondary: #9b9a97;
+  --border: #e8e8e8;
+  --block-hover: #f7f6f3;
+  --callout-bg: #f7f6f3;
+  --callout-border: #d3d3d3;
+  --code-bg: #f7f6f3;
+  --code-text: #eb5757;
+  --table-header-bg: #f7f6f3;
+  --table-border: #e8e8e8;
+  --blockquote-border: #d3d3d3;
+  --checkbox-checked: #2563eb;
+  --link: #2563eb;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #e8e8e8;
+  --toolbar-btn-hover: #f7f6f3;
+  --font-body: ui-sans-serif, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: ui-serif, 'Georgia', serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}

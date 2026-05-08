@@ -1,0 +1,20 @@
+.theme-dark {
+  --bg: #191919;
+  --bg-secondary: #252525;
+  --text-primary: #cfcfcf;
+  --text-secondary: #6c7086;
+  --border: #2f2f2f;
+  --block-hover: #252525;
+  --callout-bg: #2d2d1a;
+  --callout-border: #555555;
+  --code-bg: #252525;
+  --code-text: #f38ba8;
+  --table-header-bg: #252525;
+  --table-border: #2f2f2f;
+  --blockquote-border: #555555;
+  --checkbox-checked: #93c5fd;
+  --link: #93c5fd;
+  --toolbar-bg: #1e1e1e;
+  --toolbar-border: #2f2f2f;
+  --toolbar-btn-hover: #252525;
+}
