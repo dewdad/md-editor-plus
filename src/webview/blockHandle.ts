@@ -1,0 +1,117 @@
+import { Editor } from '@tiptap/core';
+import { createBlockPicker } from './blockPicker';
+
+function getInsertPosFromHandle(editor: Editor, handleEl: HTMLElement): number {
+  const rect = handleEl.getBoundingClientRect();
+  // Sample a point just to the right of the handle, at vertical mid-point
+  const result = editor.view.posAtCoords({
+    left: rect.right + 24,
+    top:  rect.top + rect.height / 2,
+  });
+  if (!result) return editor.state.doc.content.size;
+
+  const $pos = editor.view.state.doc.resolve(result.pos);
+  // Walk up to a top-level child of the doc
+  let depth = $pos.depth;
+  while (depth > 1) depth--;
+  return $pos.end(depth);
+}
+
+function showTooltip(tooltip: HTMLElement, targetEl: HTMLElement, text: string): void {
+  tooltip.innerHTML = text;
+  tooltip.style.display = 'block';
+  const rect = targetEl.getBoundingClientRect();
+  tooltip.style.left = `${rect.left + window.scrollX + rect.width / 2}px`;
+  tooltip.style.top  = `${rect.top  + window.scrollY - tooltip.offsetHeight - 6}px`;
+  // Correct left after measuring width
+  requestAnimationFrame(() => {
+    const tw = tooltip.offsetWidth;
+    tooltip.style.left = `${rect.left + window.scrollX + rect.width / 2 - tw / 2}px`;
+  });
+}
+
+function hideTooltip(tooltip: HTMLElement): void {
+  tooltip.style.display = 'none';
+}
+
+export function createBlockHandle(editor: Editor): void {
+  const picker  = createBlockPicker(editor);
+  const tooltip = document.createElement('div');
+  tooltip.className = 'block-handle-tooltip';
+  document.body.appendChild(tooltip);
+
+  // GlobalDragHandle creates a .drag-handle element after the editor mounts.
+  // We augment it with our + button and drag icon once it exists.
+  const interval = setInterval(() => {
+    const handleEl = document.querySelector<HTMLElement>('.drag-handle');
+    if (!handleEl) return;
+    clearInterval(interval);
+
+    // Inject + button at the start of the handle
+    const plusBtn = document.createElement('button');
+    plusBtn.className = 'block-handle-plus';
+    plusBtn.textContent = '+';
+    handleEl.insertAdjacentElement('afterbegin', plusBtn);
+
+    // Wrap the existing drag icon content in a styled span
+    const dragIcon = document.createElement('div');
+    dragIcon.className = 'block-handle-drag';
+    dragIcon.textContent = '⠿';
+    // Replace whatever GlobalDragHandle put inside (keep only our icon)
+    Array.from(handleEl.children).forEach(child => {
+      if (child !== plusBtn) child.remove();
+    });
+    handleEl.appendChild(dragIcon);
+
+    // + button: click → open picker
+    plusBtn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      picker.open(plusBtn, getInsertPosFromHandle(editor, handleEl));
+    });
+
+    // + button: tooltip
+    plusBtn.addEventListener('mouseenter', () => {
+      showTooltip(tooltip, plusBtn, 'Add block below');
+    });
+    plusBtn.addEventListener('mouseleave', () => hideTooltip(tooltip));
+
+    // drag icon: click without drag → open picker
+    let dragStarted = false;
+    dragIcon.addEventListener('dragstart', () => { dragStarted = true; });
+    dragIcon.addEventListener('click', e => {
+      if (dragStarted) { dragStarted = false; return; }
+      e.preventDefault();
+      e.stopPropagation();
+      picker.open(dragIcon, getInsertPosFromHandle(editor, handleEl));
+    });
+
+    // drag icon: tooltip
+    dragIcon.addEventListener('mouseenter', () => {
+      showTooltip(tooltip, dragIcon,
+        '<strong>Drag</strong> to move<br><strong>Click</strong> or <span class="kbd">⌘/</span> to open menu'
+      );
+    });
+    dragIcon.addEventListener('mouseleave', () => hideTooltip(tooltip));
+  }, 100);
+
+  // ⌘/ keyboard shortcut — opens picker at current cursor position
+  editor.view.dom.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      const { from } = editor.state.selection;
+      const $pos  = editor.view.state.doc.resolve(from);
+      let depth = $pos.depth;
+      while (depth > 1) depth--;
+      const insertPos = $pos.end(depth);
+
+      // Position picker near cursor
+      const coords = editor.view.coordsAtPos(from);
+      const anchor = document.createElement('div');
+      anchor.style.cssText = `position:fixed;left:${coords.left}px;top:${coords.bottom}px;width:0;height:0`;
+      document.body.appendChild(anchor);
+      picker.open(anchor, insertPos);
+      requestAnimationFrame(() => anchor.remove());
+    }
+  });
+}
