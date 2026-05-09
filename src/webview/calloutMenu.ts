@@ -24,6 +24,8 @@ const EMOJI_GRID = [
   '🌟','🌈','🌸','🍀','☀️','🌙','⏰','🎨','📊','🎁',
 ];
 
+type View = 'types' | 'emoji';
+
 export interface CalloutMenu {
   open: (anchorEl: HTMLElement, calloutPos: number) => void;
   close: () => void;
@@ -31,7 +33,6 @@ export interface CalloutMenu {
 
 export function createCalloutMenu(editor: Editor): CalloutMenu {
   let pos = 0;
-  let pickerOpen = false;
 
   const el = document.createElement('div');
   el.className = 'callout-menu';
@@ -56,55 +57,70 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
       .run();
   }
 
+  function showView(view: View): void {
+    el.querySelectorAll<HTMLElement>('.callout-menu-view').forEach((v) => {
+      v.classList.toggle('active', v.dataset.view === view);
+    });
+    if (view === 'emoji') {
+      const input = el.querySelector<HTMLInputElement>('.callout-menu-emoji-input');
+      requestAnimationFrame(() => {
+        input?.focus();
+        input?.select();
+      });
+    }
+  }
+
   function render(currentType: CalloutTypeDef['id'], currentEmoji: string): void {
     el.innerHTML = `
-      <div class="callout-menu-header">Callout type</div>
-      <div class="callout-menu-list">
-        ${TYPES.map((t) => `
-          <button class="callout-menu-chip ${t.id === currentType ? 'active' : ''}" data-type="${t.id}" data-callout-preview="${t.id}">
-            <span class="callout-menu-chip-emoji">${t.emoji}</span>
-            <span class="callout-menu-chip-label">${t.label}</span>
-            ${t.id === currentType ? '<span class="callout-menu-chip-check">✓</span>' : ''}
-          </button>
-        `).join('')}
-      </div>
-      <div class="callout-menu-divider"></div>
-      <div class="callout-menu-emoji-section">
-        <div class="callout-menu-emoji-head">
-          <span class="callout-menu-emoji-title">Custom emoji</span>
-          <button class="callout-menu-emoji-reset" data-action="reset">Reset</button>
+      <div class="callout-menu-view active" data-view="types">
+        <div class="callout-menu-header">Callout type</div>
+        <div class="callout-menu-list">
+          ${TYPES.map((t) => `
+            <button class="callout-menu-chip ${t.id === currentType ? 'active' : ''}" data-type="${t.id}" data-callout-preview="${t.id}">
+              <span class="callout-menu-chip-emoji">${t.emoji}</span>
+              <span class="callout-menu-chip-label">${t.label}</span>
+              ${t.id === currentType ? '<span class="callout-menu-chip-check">✓</span>' : ''}
+            </button>
+          `).join('')}
         </div>
-        <button
-          class="callout-menu-emoji-trigger ${pickerOpen ? 'open' : ''}"
-          data-action="toggle-picker"
-          aria-expanded="${pickerOpen ? 'true' : 'false'}"
-        >
-          <span class="callout-menu-emoji-current">${escapeHtml(currentEmoji)}</span>
-          <span class="callout-menu-emoji-trigger-label">Customize Emoji</span>
-          <span class="callout-menu-emoji-trigger-caret">▾</span>
+        <div class="callout-menu-divider"></div>
+        <div class="callout-menu-emoji-section">
+          <div class="callout-menu-emoji-head">
+            <span class="callout-menu-emoji-title">Custom emoji</span>
+            <button class="callout-menu-emoji-reset" data-action="reset">Reset</button>
+          </div>
+          <button class="callout-menu-emoji-trigger" data-action="open-picker">
+            <span class="callout-menu-emoji-current">${escapeHtml(currentEmoji)}</span>
+            <span class="callout-menu-emoji-trigger-label">Customize Emoji</span>
+            <span class="callout-menu-emoji-trigger-caret">›</span>
+          </button>
+        </div>
+      </div>
+      <div class="callout-menu-view" data-view="emoji">
+        <button class="callout-menu-back" data-action="back">
+          <span class="callout-menu-back-icon">‹</span>
+          <span class="callout-menu-back-label">Customize emoji</span>
         </button>
-        <div class="callout-menu-emoji-panel ${pickerOpen ? 'open' : ''}">
-          <div class="callout-menu-emoji-input-row">
-            <input
-              class="callout-menu-emoji-input"
-              type="text"
-              spellcheck="false"
-              autocomplete="off"
-              maxlength="32"
-              placeholder="Paste any emoji or press ↵ to apply"
-              value="${escapeAttr(currentEmoji)}"
-            />
-            <button class="callout-menu-emoji-apply" data-action="apply">Set</button>
-          </div>
-          <div class="callout-menu-emoji-hint">
-            Tip: focus this field and press <kbd>${osPickerShortcut()}</kbd> for the system emoji picker.
-          </div>
-          <div class="callout-menu-emoji-quickpicks-label">Quick picks</div>
-          <div class="callout-menu-emoji-grid">
-            ${EMOJI_GRID.map((e) => `
-              <button class="callout-menu-emoji-cell ${e === currentEmoji ? 'active' : ''}" data-emoji="${escapeAttr(e)}" title="${escapeAttr(e)}">${e}</button>
-            `).join('')}
-          </div>
+        <div class="callout-menu-emoji-input-row">
+          <input
+            class="callout-menu-emoji-input"
+            type="text"
+            spellcheck="false"
+            autocomplete="off"
+            maxlength="32"
+            placeholder="Paste any emoji or press ↵"
+            value="${escapeAttr(currentEmoji)}"
+          />
+          <button class="callout-menu-emoji-apply" data-action="apply">Set</button>
+        </div>
+        <div class="callout-menu-emoji-hint">
+          Tip: focus this field and press <kbd>${osPickerShortcut()}</kbd> for the system emoji picker.
+        </div>
+        <div class="callout-menu-emoji-quickpicks-label">Quick picks</div>
+        <div class="callout-menu-emoji-grid">
+          ${EMOJI_GRID.map((e) => `
+            <button class="callout-menu-emoji-cell ${e === currentEmoji ? 'active' : ''}" data-emoji="${escapeAttr(e)}" title="${escapeAttr(e)}">${e}</button>
+          `).join('')}
         </div>
       </div>
     `;
@@ -119,35 +135,32 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
       });
     });
 
-    // Toggle the emoji panel by flipping classes on the existing nodes — do
-    // NOT re-render here. Replacing innerHTML detaches the click target from
-    // the DOM before the global mousedown listener runs, which then thinks
-    // the click was outside the menu and closes the whole popover.
-    const trigger = el.querySelector<HTMLElement>('[data-action="toggle-picker"]');
-    const panel = el.querySelector<HTMLElement>('.callout-menu-emoji-panel');
-    const input = el.querySelector<HTMLInputElement>('.callout-menu-emoji-input');
-    trigger?.addEventListener('mousedown', (e) => {
+    el.querySelector<HTMLButtonElement>('[data-action="open-picker"]')?.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      pickerOpen = !pickerOpen;
-      trigger.classList.toggle('open', pickerOpen);
-      trigger.setAttribute('aria-expanded', pickerOpen ? 'true' : 'false');
-      panel?.classList.toggle('open', pickerOpen);
-      if (pickerOpen) {
-        // Focus the input so the user can immediately invoke the OS picker
-        // (⌃⌘Space on macOS, Win+. on Windows) or paste an emoji.
-        requestAnimationFrame(() => {
-          input?.focus();
-          input?.select();
-        });
-      }
+      showView('emoji');
     });
 
+    el.querySelector<HTMLButtonElement>('[data-action="back"]')?.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showView('types');
+    });
+
+    const input = el.querySelector<HTMLInputElement>('.callout-menu-emoji-input');
     function applyInput(): void {
       const raw = input?.value.trim() ?? '';
       if (!raw) return;
       setAttrs(null, raw);
-      close();
+      // Update the trigger preview and return to the types view; the callout
+      // itself reflects the change because setAttrs has already fired.
+      refreshTriggerPreview();
+      showView('types');
+    }
+
+    function refreshTriggerPreview(): void {
+      const cur = el.querySelector<HTMLElement>('.callout-menu-emoji-current');
+      if (cur && input) cur.textContent = input.value.trim();
     }
 
     input?.addEventListener('keydown', (e) => {
@@ -156,11 +169,9 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
         applyInput();
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        close();
+        showView('types');
       }
     });
-    // Don't let mousedown propagate up to the global "click outside → close"
-    // listener — clicking inside the input is still inside the menu.
     input?.addEventListener('mousedown', (e) => { e.stopPropagation(); });
 
     el.querySelector<HTMLButtonElement>('[data-action="apply"]')?.addEventListener('mousedown', (e) => {
@@ -172,24 +183,28 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
     el.querySelectorAll<HTMLButtonElement>('.callout-menu-emoji-cell').forEach((cell) => {
       cell.addEventListener('mousedown', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         const next = cell.dataset.emoji ?? '';
         if (!next) return;
+        if (input) input.value = next;
         setAttrs(null, next);
-        close();
+        refreshTriggerPreview();
+        showView('types');
       });
     });
 
     el.querySelector<HTMLButtonElement>('[data-action="reset"]')?.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      setAttrs(null, DEFAULT_EMOJI_BY_TYPE[currentType]);
-      close();
+      const defaultEmoji = DEFAULT_EMOJI_BY_TYPE[currentType];
+      setAttrs(null, defaultEmoji);
+      const cur = el.querySelector<HTMLElement>('.callout-menu-emoji-current');
+      if (cur) cur.textContent = defaultEmoji;
     });
   }
 
   function open(anchorEl: HTMLElement, calloutPos: number): void {
     try {
       pos = calloutPos;
-      pickerOpen = false;
       const node = editor.state.doc.nodeAt(calloutPos);
       if (!node || node.type.name !== 'callout') return;
       const currentType = (node.attrs.type as CalloutTypeDef['id']) ?? 'note';
@@ -215,7 +230,6 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
 
   function close(): void {
     el.classList.remove('open');
-    pickerOpen = false;
   }
 
   document.addEventListener('mousedown', (e) => {
