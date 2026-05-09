@@ -83,10 +83,28 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
           <span class="callout-menu-emoji-trigger-label">Customize Emoji</span>
           <span class="callout-menu-emoji-trigger-caret">▾</span>
         </button>
-        <div class="callout-menu-emoji-grid ${pickerOpen ? 'open' : ''}">
-          ${EMOJI_GRID.map((e) => `
-            <button class="callout-menu-emoji-cell ${e === currentEmoji ? 'active' : ''}" data-emoji="${escapeAttr(e)}" title="${escapeAttr(e)}">${e}</button>
-          `).join('')}
+        <div class="callout-menu-emoji-panel ${pickerOpen ? 'open' : ''}">
+          <div class="callout-menu-emoji-input-row">
+            <input
+              class="callout-menu-emoji-input"
+              type="text"
+              spellcheck="false"
+              autocomplete="off"
+              maxlength="32"
+              placeholder="Paste any emoji or press ↵ to apply"
+              value="${escapeAttr(currentEmoji)}"
+            />
+            <button class="callout-menu-emoji-apply" data-action="apply">Set</button>
+          </div>
+          <div class="callout-menu-emoji-hint">
+            Tip: focus this field and press <kbd>${osPickerShortcut()}</kbd> for the system emoji picker.
+          </div>
+          <div class="callout-menu-emoji-quickpicks-label">Quick picks</div>
+          <div class="callout-menu-emoji-grid">
+            ${EMOJI_GRID.map((e) => `
+              <button class="callout-menu-emoji-cell ${e === currentEmoji ? 'active' : ''}" data-emoji="${escapeAttr(e)}" title="${escapeAttr(e)}">${e}</button>
+            `).join('')}
+          </div>
         </div>
       </div>
     `;
@@ -101,19 +119,54 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
       });
     });
 
-    // Toggle the emoji grid by flipping classes on the existing nodes — do
+    // Toggle the emoji panel by flipping classes on the existing nodes — do
     // NOT re-render here. Replacing innerHTML detaches the click target from
     // the DOM before the global mousedown listener runs, which then thinks
     // the click was outside the menu and closes the whole popover.
     const trigger = el.querySelector<HTMLElement>('[data-action="toggle-picker"]');
-    const grid = el.querySelector<HTMLElement>('.callout-menu-emoji-grid');
+    const panel = el.querySelector<HTMLElement>('.callout-menu-emoji-panel');
+    const input = el.querySelector<HTMLInputElement>('.callout-menu-emoji-input');
     trigger?.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       pickerOpen = !pickerOpen;
       trigger.classList.toggle('open', pickerOpen);
       trigger.setAttribute('aria-expanded', pickerOpen ? 'true' : 'false');
-      grid?.classList.toggle('open', pickerOpen);
+      panel?.classList.toggle('open', pickerOpen);
+      if (pickerOpen) {
+        // Focus the input so the user can immediately invoke the OS picker
+        // (⌃⌘Space on macOS, Win+. on Windows) or paste an emoji.
+        requestAnimationFrame(() => {
+          input?.focus();
+          input?.select();
+        });
+      }
+    });
+
+    function applyInput(): void {
+      const raw = input?.value.trim() ?? '';
+      if (!raw) return;
+      setAttrs(null, raw);
+      close();
+    }
+
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        applyInput();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+      }
+    });
+    // Don't let mousedown propagate up to the global "click outside → close"
+    // listener — clicking inside the input is still inside the menu.
+    input?.addEventListener('mousedown', (e) => { e.stopPropagation(); });
+
+    el.querySelector<HTMLButtonElement>('[data-action="apply"]')?.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      applyInput();
     });
 
     el.querySelectorAll<HTMLButtonElement>('.callout-menu-emoji-cell').forEach((cell) => {
@@ -202,4 +255,13 @@ function escapeAttr(s: string): string {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function osPickerShortcut(): string {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const platform = ((navigator as unknown as { platform?: string }).platform || '').toLowerCase();
+  if (ua.includes('mac') || platform.includes('mac')) return '⌃⌘Space';
+  if (ua.includes('win') || platform.includes('win')) return 'Win+.';
+  if (ua.includes('linux')) return 'system emoji shortcut';
+  return '⌃⌘Space';
 }
