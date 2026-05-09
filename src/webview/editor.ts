@@ -75,7 +75,13 @@ export function createEditor(
   _fmHostEl = element;
   const split = splitFrontmatter(initialMarkdown);
   _frontmatter = split.frontmatter;
-  const body = preprocessMarkdownCallouts(split.body);
+  let body: string;
+  try {
+    body = preprocessMarkdownCallouts(split.body);
+  } catch (err) {
+    console.error('[md-editor-plus] callout preprocess failed', err);
+    body = split.body;
+  }
 
   _editor = new Editor({
     element,
@@ -122,8 +128,24 @@ export function updateContent(markdown: string): void {
   if (!_editor) return;
   const split = splitFrontmatter(markdown);
   _frontmatter = split.frontmatter;
-  _editor.commands.setContent(preprocessMarkdownCallouts(split.body));
+  let next: string;
+  try {
+    next = preprocessMarkdownCallouts(split.body);
+  } catch (err) {
+    console.error('[md-editor-plus] callout preprocess failed', err);
+    next = split.body;
+  }
+  _editor.commands.setContent(next);
   refreshFrontmatterIndicator();
+}
+
+// Reads the current markdown directly from the editor — bypasses the 500 ms
+// onUpdate debounce so callers (e.g. view-toggle handlers) can sync the source
+// view to the absolute latest preview state.
+export function getCurrentMarkdown(): string {
+  if (!_editor) return '';
+  const markdown = _editor.storage.markdown.getMarkdown() as string;
+  return _frontmatter + markdown;
 }
 
 export function destroyEditor(): void {

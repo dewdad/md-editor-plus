@@ -22,18 +22,23 @@ function getBlockAtHandle(
   editor: Editor,
   handleEl: HTMLElement,
 ): { typeName: string; pos: number } | null {
-  const rect = handleEl.getBoundingClientRect();
-  const result = editor.view.posAtCoords({
-    left: rect.right + 24,
-    top:  rect.top + rect.height / 2,
-  });
-  if (!result) return null;
-  const $pos = editor.view.state.doc.resolve(result.pos);
-  if ($pos.depth < 1) return null;
-  const blockPos = $pos.before(1);
-  const blockNode = editor.state.doc.nodeAt(blockPos);
-  if (!blockNode) return null;
-  return { typeName: blockNode.type.name, pos: blockPos };
+  try {
+    const rect = handleEl.getBoundingClientRect();
+    const result = editor.view.posAtCoords({
+      left: rect.right + 24,
+      top:  rect.top + rect.height / 2,
+    });
+    if (!result) return null;
+    const $pos = editor.view.state.doc.resolve(result.pos);
+    if ($pos.depth < 1) return null;
+    const blockPos = $pos.before(1);
+    const blockNode = editor.state.doc.nodeAt(blockPos);
+    if (!blockNode) return null;
+    return { typeName: blockNode.type.name, pos: blockPos };
+  } catch (err) {
+    console.error('[md-editor-plus] getBlockAtHandle failed', err);
+    return null;
+  }
 }
 
 function showTooltip(tooltip: HTMLElement, targetEl: HTMLElement, text: string): void {
@@ -55,7 +60,12 @@ function hideTooltip(tooltip: HTMLElement): void {
 
 export function createBlockHandle(editor: Editor): void {
   const picker  = createBlockPicker(editor);
-  const calloutMenu = createCalloutMenu(editor);
+  let calloutMenu: ReturnType<typeof createCalloutMenu> | null = null;
+  try {
+    calloutMenu = createCalloutMenu(editor);
+  } catch (err) {
+    console.error('[md-editor-plus] callout menu init failed', err);
+  }
   const tooltip = document.createElement('div');
   tooltip.className = 'block-handle-tooltip';
   document.body.appendChild(tooltip);
@@ -104,8 +114,8 @@ export function createBlockHandle(editor: Editor): void {
       if (dragStarted) { dragStarted = false; return; }
       e.preventDefault();
       e.stopPropagation();
-      const block = getBlockAtHandle(editor, handleEl);
-      if (block?.typeName === 'callout') {
+      const block = calloutMenu ? getBlockAtHandle(editor, handleEl) : null;
+      if (calloutMenu && block?.typeName === 'callout') {
         calloutMenu.open(dragIcon, block.pos);
         return;
       }
