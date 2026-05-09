@@ -287,29 +287,25 @@ body {
   margin: 4px 0;
 }
 
-/* Frontmatter indicator — sits at the top of the editor when the document
-   has YAML/TOML frontmatter. Click jumps to source view for editing. */
-.fm-indicator {
+/* Frontmatter badge — small numeric pill shown inside the Code segment of the
+   view toggle when the document has YAML/TOML frontmatter. */
+.fm-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin: 12px 0 0 64px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--block-hover);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .02em;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.12s, color 0.12s;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  margin-left: 4px;
+  border-radius: 7px;
+  background: var(--link);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
 }
-.fm-indicator:hover { background: var(--seg-bg); color: var(--text-primary); }
-.fm-indicator svg { color: currentColor; }
-.fm-indicator .fm-label { text-transform: uppercase; letter-spacing: .06em; }
-.fm-indicator .fm-count { opacity: 0.7; font-weight: 500; }
-#editor.width-full .fm-indicator { margin-left: 64px; }
+.fm-badge.hidden { display: none; }
 
 .settings-defaults-row {
   display: flex;
