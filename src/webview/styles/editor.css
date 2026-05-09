@@ -1130,9 +1130,35 @@ html.source-full-width #source-view {
   gap: 10px;
   background: var(--callout-bg);
   border: 1px solid var(--callout-border);
+  border-left: 3px solid var(--callout-accent, var(--callout-border));
   border-radius: 5px;
   padding: 12px 16px;
   margin: 0.75rem 0;
+}
+.ProseMirror .callout[data-type="note"] {
+  background: var(--callout-note-bg, var(--callout-bg));
+  border-color: var(--callout-note-border, var(--callout-border));
+  --callout-accent: var(--callout-note-accent, var(--callout-note-border));
+}
+.ProseMirror .callout[data-type="tip"] {
+  background: var(--callout-tip-bg, var(--callout-bg));
+  border-color: var(--callout-tip-border, var(--callout-border));
+  --callout-accent: var(--callout-tip-accent, var(--callout-tip-border));
+}
+.ProseMirror .callout[data-type="important"] {
+  background: var(--callout-important-bg, var(--callout-bg));
+  border-color: var(--callout-important-border, var(--callout-border));
+  --callout-accent: var(--callout-important-accent, var(--callout-important-border));
+}
+.ProseMirror .callout[data-type="warning"] {
+  background: var(--callout-warning-bg, var(--callout-bg));
+  border-color: var(--callout-warning-border, var(--callout-border));
+  --callout-accent: var(--callout-warning-accent, var(--callout-warning-border));
+}
+.ProseMirror .callout[data-type="caution"] {
+  background: var(--callout-caution-bg, var(--callout-bg));
+  border-color: var(--callout-caution-border, var(--callout-border));
+  --callout-accent: var(--callout-caution-accent, var(--callout-caution-border));
 }
 .ProseMirror .callout-emoji { flex-shrink: 0; font-size: 1.1rem; line-height: 1.6; }
 .ProseMirror .callout-content { flex: 1; }
@@ -1169,6 +1195,85 @@ html.source-full-width #source-view {
   box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.10);
   z-index: 999;
 }
+
+/* Inline URL input that swaps in for the bubble menu's button row when
+   the user clicks Link. Compact pill that fits the bubble's existing chrome. */
+.bm-link-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--block-hover);
+  border-radius: 9px;
+  min-height: 38px;
+}
+.bm-link-row-input {
+  flex: 1;
+  min-width: 240px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  height: 32px;
+}
+.bm-link-row-input::placeholder { color: var(--text-secondary); opacity: 0.7; }
+.bm-link-row-icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: transparent;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+.bm-link-row-icon:hover { background: var(--bg); color: var(--text-primary); }
+.bm-link-row-apply {
+  color: var(--link);
+}
+.bm-link-row-apply:hover {
+  background: var(--link);
+  color: #ffffff;
+}
+
+/* Link actions popover (shown when an existing link is clicked) */
+.bm-link-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--block-hover);
+  border-radius: 9px;
+  min-height: 38px;
+  max-width: 360px;
+}
+.bm-link-actions-href {
+  flex: 1;
+  min-width: 0;
+  padding: 0 10px;
+  color: var(--link);
+  font-size: 12px;
+  font-family: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  outline: none;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+.bm-link-actions-href:hover { text-decoration: underline; }
 
 /* Floating link-URL popover for the source bubble-menu Link button.
    Mounted on document.body so tippy/bubble-menu mounting can't interfere. */

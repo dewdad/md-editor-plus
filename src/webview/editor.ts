@@ -16,7 +16,7 @@ import Highlight from '@tiptap/extension-highlight';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { common, createLowlight } from 'lowlight';
 import { Markdown } from 'tiptap-markdown';
-import Callout from './extensions/callout';
+import Callout, { preprocessMarkdownCallouts } from './extensions/callout';
 import Toggle from './extensions/toggle';
 import { createBubbleMenu } from './bubbleMenu';
 import { createBlockHandle } from './blockHandle';
@@ -75,6 +75,7 @@ export function createEditor(
   _fmHostEl = element;
   const split = splitFrontmatter(initialMarkdown);
   _frontmatter = split.frontmatter;
+  const body = preprocessMarkdownCallouts(split.body);
 
   _editor = new Editor({
     element,
@@ -101,7 +102,7 @@ export function createEditor(
       Toggle,
       GlobalDragHandle.configure({ dragHandleWidth: 48 }),
     ],
-    content: split.body,
+    content: body,
     onUpdate({ editor }) {
       if (_debounceTimer) clearTimeout(_debounceTimer);
       _debounceTimer = setTimeout(() => {
@@ -121,7 +122,7 @@ export function updateContent(markdown: string): void {
   if (!_editor) return;
   const split = splitFrontmatter(markdown);
   _frontmatter = split.frontmatter;
-  _editor.commands.setContent(split.body);
+  _editor.commands.setContent(preprocessMarkdownCallouts(split.body));
   refreshFrontmatterIndicator();
 }
 
