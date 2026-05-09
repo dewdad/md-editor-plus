@@ -13,10 +13,10 @@ Both publish from the same codebase via npm scripts already in `package.json`.
 
 You need two accounts and two tokens. Each takes ~5 minutes.
 
-### 1. Visual Studio Marketplace (publisher: `aviranrevach`)
+### 1. Visual Studio Marketplace (publisher: `AviranRevach`)
 
 1. Open https://marketplace.visualstudio.com/manage and sign in with a Microsoft account.
-2. Create a new publisher with the **ID** `aviranrevach` (must match `package.json`).
+2. Create a new publisher with the **ID** `AviranRevach` (must match `package.json`).
 3. Generate a Personal Access Token (PAT):
    - Open https://dev.azure.com → User Settings → **Personal Access Tokens**.
    - **Organization:** All accessible organizations.
@@ -25,7 +25,7 @@ You need two accounts and two tokens. Each takes ~5 minutes.
 4. Copy the token — you only see it once.
 5. Authenticate `vsce` once:
    ```sh
-   npx vsce login aviranrevach
+   npx vsce login AviranRevach
    ```
    Paste the PAT when prompted. Stored locally; you don't need to re-login until it expires.
 
@@ -66,13 +66,13 @@ You need two accounts and two tokens. Each takes ~5 minutes.
    ```sh
    npm run publish:vscode
    ```
-   Listing appears at: https://marketplace.visualstudio.com/items?itemName=aviranrevach.md-editor-plus
+   Listing appears at: https://marketplace.visualstudio.com/items?itemName=AviranRevach.md-editor-plus
 
 5. **Publish to Open VSX:**
    ```sh
    npm run publish:openvsx
    ```
-   Listing appears at: https://open-vsx.org/extension/aviranrevach/md-editor-plus
+   Listing appears at: https://open-vsx.org/extension/AviranRevach/md-editor-plus
 
 6. **Push git tags:**
    ```sh
@@ -94,7 +94,7 @@ You need two accounts and two tokens. Each takes ~5 minutes.
 
 ```sh
 # First-time only
-npx vsce login aviranrevach
+npx vsce login AviranRevach
 export OVSX_PAT=<token>
 
 # Every release
