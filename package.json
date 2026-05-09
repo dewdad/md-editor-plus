@@ -9,13 +9,13 @@
     "name": "Aviran Revach",
     "email": "aviran@atera.com"
   },
-  "homepage": "https://github.com/aviranrevach/md-viewer#readme",
+  "homepage": "https://github.com/aviranrevach/md-editor-plus#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aviranrevach/md-viewer.git"
+    "url": "https://github.com/aviranrevach/md-editor-plus.git"
   },
   "bugs": {
-    "url": "https://github.com/aviranrevach/md-viewer/issues"
+    "url": "https://github.com/aviranrevach/md-editor-plus/issues"
   },
   "engines": {
     "vscode": "^1.74.0"
