@@ -3,12 +3,13 @@
 .git/**
 .github/**
 .superpowers/**
+.DS_Store
 src/**
 tests/**
 node_modules/**
 dist-webview/**
 docs/**
-*.map
+**/*.map
 *.vsix
 tsconfig*.json
 esbuild.config.js
