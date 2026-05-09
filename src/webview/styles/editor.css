@@ -1838,6 +1838,89 @@ html.source-full-width #source-view {
   line-height: 1.3;
 }
 
+.callout-menu {
+  position: fixed;
+  display: none;
+  width: 220px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 1050;
+}
+.theme-dark .callout-menu {
+  box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+}
+.callout-menu.open { display: block; }
+
+.callout-menu-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+  padding: 8px 10px 6px;
+}
+
+.callout-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.callout-menu-item {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: 7px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  transition: background 0.08s, border-color 0.08s;
+}
+.callout-menu-item:hover { background: var(--block-hover); }
+.callout-menu-item.active {
+  background: var(--block-hover);
+  border-color: var(--callout-accent, var(--border));
+  border-left-color: var(--callout-accent, var(--border));
+}
+.callout-menu-item[data-callout-preview="note"]      { --callout-accent: var(--callout-note-accent, var(--border)); }
+.callout-menu-item[data-callout-preview="tip"]       { --callout-accent: var(--callout-tip-accent, var(--border)); }
+.callout-menu-item[data-callout-preview="important"] { --callout-accent: var(--callout-important-accent, var(--border)); }
+.callout-menu-item[data-callout-preview="warning"]   { --callout-accent: var(--callout-warning-accent, var(--border)); }
+.callout-menu-item[data-callout-preview="caution"]   { --callout-accent: var(--callout-caution-accent, var(--border)); }
+
+.callout-menu-emoji {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1;
+}
+.callout-menu-label {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.callout-menu-check {
+  color: var(--callout-accent, var(--text-secondary));
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
 .block-picker-sep {
   height: 1px;
   background: var(--border);
