@@ -1893,7 +1893,7 @@ html.source-full-width #source-view {
 .callout-menu {
   position: fixed;
   display: none;
-  width: 220px;
+  width: 256px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1918,15 +1918,16 @@ html.source-full-width #source-view {
 .callout-menu-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  padding: 0 4px;
 }
 
-.callout-menu-item {
+.callout-menu-chip {
   appearance: none;
   -webkit-appearance: none;
-  background: transparent;
-  border: 1px solid transparent;
-  border-left: 3px solid transparent;
+  border: 1px solid var(--callout-border);
+  border-left: 3px solid var(--callout-accent, var(--callout-border));
+  background: var(--callout-bg);
   border-radius: 7px;
   padding: 8px 10px;
   display: flex;
@@ -1937,39 +1938,59 @@ html.source-full-width #source-view {
   font: inherit;
   text-align: left;
   width: 100%;
-  transition: background 0.08s, border-color 0.08s;
+  transition: filter 0.1s, box-shadow 0.1s;
 }
-.callout-menu-item:hover { background: var(--block-hover); }
-.callout-menu-item.active {
-  background: var(--block-hover);
-  border-color: var(--callout-accent, var(--border));
-  border-left-color: var(--callout-accent, var(--border));
+.callout-menu-chip[data-callout-preview="note"] {
+  background: var(--callout-note-bg, var(--callout-bg));
+  border-color: var(--callout-note-border, var(--callout-border));
+  --callout-accent: var(--callout-note-accent, var(--callout-note-border));
 }
-.callout-menu-item[data-callout-preview="note"]      { --callout-accent: var(--callout-note-accent, var(--border)); }
-.callout-menu-item[data-callout-preview="tip"]       { --callout-accent: var(--callout-tip-accent, var(--border)); }
-.callout-menu-item[data-callout-preview="important"] { --callout-accent: var(--callout-important-accent, var(--border)); }
-.callout-menu-item[data-callout-preview="warning"]   { --callout-accent: var(--callout-warning-accent, var(--border)); }
-.callout-menu-item[data-callout-preview="caution"]   { --callout-accent: var(--callout-caution-accent, var(--border)); }
+.callout-menu-chip[data-callout-preview="tip"] {
+  background: var(--callout-tip-bg, var(--callout-bg));
+  border-color: var(--callout-tip-border, var(--callout-border));
+  --callout-accent: var(--callout-tip-accent, var(--callout-tip-border));
+}
+.callout-menu-chip[data-callout-preview="important"] {
+  background: var(--callout-important-bg, var(--callout-bg));
+  border-color: var(--callout-important-border, var(--callout-border));
+  --callout-accent: var(--callout-important-accent, var(--callout-important-border));
+}
+.callout-menu-chip[data-callout-preview="warning"] {
+  background: var(--callout-warning-bg, var(--callout-bg));
+  border-color: var(--callout-warning-border, var(--callout-border));
+  --callout-accent: var(--callout-warning-accent, var(--callout-warning-border));
+}
+.callout-menu-chip[data-callout-preview="caution"] {
+  background: var(--callout-caution-bg, var(--callout-bg));
+  border-color: var(--callout-caution-border, var(--callout-border));
+  --callout-accent: var(--callout-caution-accent, var(--callout-caution-border));
+}
+.callout-menu-chip:hover { filter: brightness(0.97); }
+.theme-dark .callout-menu-chip:hover { filter: brightness(1.15); }
+.callout-menu-chip.active {
+  box-shadow: 0 0 0 2px var(--callout-accent);
+}
 
-.callout-menu-emoji {
-  width: 26px;
-  height: 26px;
+.callout-menu-chip-emoji {
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
 }
-.callout-menu-label {
+.callout-menu-chip-label {
   flex: 1;
   font-size: 13px;
+  font-weight: 500;
   line-height: 1.3;
 }
-.callout-menu-check {
+.callout-menu-chip-check {
   color: var(--callout-accent, var(--text-secondary));
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -1979,67 +2000,113 @@ html.source-full-width #source-view {
   margin: 8px 4px;
 }
 
-.callout-menu-emoji-row {
+.callout-menu-emoji-section {
+  padding: 0 4px 4px;
+}
+
+.callout-menu-emoji-head {
   display: flex;
-  gap: 6px;
-  padding: 0 6px 6px;
   align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 6px;
 }
-
-.callout-menu-emoji-input {
-  flex: 1;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-primary);
-  border-radius: 7px;
-  padding: 6px 9px;
-  font: inherit;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.12s, box-shadow 0.12s;
+.callout-menu-emoji-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
 }
-.callout-menu-emoji-input:focus {
-  border-color: var(--link);
-  box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.15);
-}
-
-.callout-menu-emoji-apply {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-primary);
-  border-radius: 7px;
-  padding: 6px 12px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.08s;
-}
-.callout-menu-emoji-apply:hover {
-  background: var(--block-hover);
-}
-
 .callout-menu-emoji-reset {
   appearance: none;
   -webkit-appearance: none;
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  border-radius: 7px;
-  padding: 6px 10px;
-  margin: 0 6px 4px;
+  border-radius: 5px;
+  padding: 3px 8px;
   font: inherit;
   font-size: 11px;
-  text-align: left;
-  width: calc(100% - 12px);
   cursor: pointer;
   transition: background 0.08s, color 0.08s;
 }
 .callout-menu-emoji-reset:hover {
   background: var(--block-hover);
   color: var(--text-primary);
+}
+
+.callout-menu-emoji-trigger {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.08s, border-color 0.08s;
+}
+.callout-menu-emoji-trigger:hover { background: var(--block-hover); }
+.callout-menu-emoji-trigger.open {
+  background: var(--block-hover);
+  border-color: var(--text-secondary);
+}
+.callout-menu-emoji-current {
+  font-size: 17px;
+  line-height: 1;
+  width: 22px;
+  text-align: center;
+}
+.callout-menu-emoji-trigger-label {
+  flex: 1;
+  font-size: 13px;
+}
+.callout-menu-emoji-trigger-caret {
+  font-size: 11px;
+  color: var(--text-secondary);
+  transition: transform 0.12s;
+}
+.callout-menu-emoji-trigger.open .callout-menu-emoji-trigger-caret {
+  transform: rotate(180deg);
+}
+
+.callout-menu-emoji-grid {
+  display: none;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  margin-top: 6px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-secondary, var(--bg));
+}
+.callout-menu-emoji-grid.open { display: grid; }
+.callout-menu-emoji-cell {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 5px;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.08s, border-color 0.08s, transform 0.08s;
+}
+.callout-menu-emoji-cell:hover {
+  background: var(--block-hover);
+  transform: scale(1.1);
+}
+.callout-menu-emoji-cell.active {
+  border-color: var(--link);
+  background: var(--block-hover);
 }
 
 .block-picker-sep {

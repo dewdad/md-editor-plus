@@ -17,6 +17,13 @@ const TYPES: CalloutTypeDef[] = [
 const DEFAULT_EMOJI_BY_TYPE: Record<CalloutTypeDef['id'], string> =
   TYPES.reduce((acc, t) => ({ ...acc, [t.id]: t.emoji }), {} as Record<CalloutTypeDef['id'], string>);
 
+const EMOJI_GRID = [
+  '😀','😂','😍','🥰','😎','🤔','😢','😡','🙏','👍',
+  '👎','❤️','✅','❌','⚠️','💡','❓','❗','⭐','✨',
+  '🔥','🎯','🚀','📌','📝','📚','💻','📱','🎉','💯',
+  '🌟','🌈','🌸','🍀','☀️','🌙','⏰','🎨','📊','🎁',
+];
+
 export interface CalloutMenu {
   open: (anchorEl: HTMLElement, calloutPos: number) => void;
   close: () => void;
@@ -24,6 +31,7 @@ export interface CalloutMenu {
 
 export function createCalloutMenu(editor: Editor): CalloutMenu {
   let pos = 0;
+  let pickerOpen = false;
 
   const el = document.createElement('div');
   el.className = 'callout-menu';
@@ -53,31 +61,37 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
       <div class="callout-menu-header">Callout type</div>
       <div class="callout-menu-list">
         ${TYPES.map((t) => `
-          <button class="callout-menu-item ${t.id === currentType ? 'active' : ''}" data-type="${t.id}" data-callout-preview="${t.id}">
-            <span class="callout-menu-emoji">${t.emoji}</span>
-            <span class="callout-menu-label">${t.label}</span>
-            ${t.id === currentType ? '<span class="callout-menu-check">✓</span>' : ''}
+          <button class="callout-menu-chip ${t.id === currentType ? 'active' : ''}" data-type="${t.id}" data-callout-preview="${t.id}">
+            <span class="callout-menu-chip-emoji">${t.emoji}</span>
+            <span class="callout-menu-chip-label">${t.label}</span>
+            ${t.id === currentType ? '<span class="callout-menu-chip-check">✓</span>' : ''}
           </button>
         `).join('')}
       </div>
       <div class="callout-menu-divider"></div>
-      <div class="callout-menu-header">Custom emoji</div>
-      <div class="callout-menu-emoji-row">
-        <input
-          class="callout-menu-emoji-input"
-          type="text"
-          maxlength="20"
-          spellcheck="false"
-          autocomplete="off"
-          value="${escapeAttr(currentEmoji)}"
-          placeholder="Paste any emoji"
-        />
-        <button class="callout-menu-emoji-apply" data-action="apply">Set</button>
+      <div class="callout-menu-emoji-section">
+        <div class="callout-menu-emoji-head">
+          <span class="callout-menu-emoji-title">Custom emoji</span>
+          <button class="callout-menu-emoji-reset" data-action="reset">Reset</button>
+        </div>
+        <button
+          class="callout-menu-emoji-trigger ${pickerOpen ? 'open' : ''}"
+          data-action="toggle-picker"
+          aria-expanded="${pickerOpen ? 'true' : 'false'}"
+        >
+          <span class="callout-menu-emoji-current">${escapeHtml(currentEmoji)}</span>
+          <span class="callout-menu-emoji-trigger-label">Choose emoji</span>
+          <span class="callout-menu-emoji-trigger-caret">▾</span>
+        </button>
+        <div class="callout-menu-emoji-grid ${pickerOpen ? 'open' : ''}">
+          ${EMOJI_GRID.map((e) => `
+            <button class="callout-menu-emoji-cell ${e === currentEmoji ? 'active' : ''}" data-emoji="${escapeAttr(e)}" title="${escapeAttr(e)}">${e}</button>
+          `).join('')}
+        </div>
       </div>
-      <button class="callout-menu-emoji-reset" data-action="reset">Reset to default ${DEFAULT_EMOJI_BY_TYPE[currentType]}</button>
     `;
 
-    el.querySelectorAll<HTMLButtonElement>('.callout-menu-item').forEach((row) => {
+    el.querySelectorAll<HTMLButtonElement>('.callout-menu-chip').forEach((row) => {
       row.addEventListener('mousedown', (e) => {
         e.preventDefault();
         const newType = row.dataset.type as CalloutTypeDef['id'];
@@ -87,33 +101,23 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
       });
     });
 
-    const input = el.querySelector<HTMLInputElement>('.callout-menu-emoji-input');
-    const applyBtn = el.querySelector<HTMLButtonElement>('[data-action="apply"]');
-    const resetBtn = el.querySelector<HTMLButtonElement>('[data-action="reset"]');
-
-    function applyEmoji(): void {
-      const raw = input?.value.trim() ?? '';
-      if (!raw) return;
-      setAttrs(null, raw);
-      close();
-    }
-
-    applyBtn?.addEventListener('mousedown', (e) => {
+    el.querySelector<HTMLButtonElement>('[data-action="toggle-picker"]')?.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      applyEmoji();
+      pickerOpen = !pickerOpen;
+      render(currentType, currentEmoji);
     });
 
-    input?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+    el.querySelectorAll<HTMLButtonElement>('.callout-menu-emoji-cell').forEach((cell) => {
+      cell.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        applyEmoji();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
+        const next = cell.dataset.emoji ?? '';
+        if (!next) return;
+        setAttrs(null, next);
         close();
-      }
+      });
     });
 
-    resetBtn?.addEventListener('mousedown', (e) => {
+    el.querySelector<HTMLButtonElement>('[data-action="reset"]')?.addEventListener('mousedown', (e) => {
       e.preventDefault();
       setAttrs(null, DEFAULT_EMOJI_BY_TYPE[currentType]);
       close();
@@ -123,6 +127,7 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
   function open(anchorEl: HTMLElement, calloutPos: number): void {
     try {
       pos = calloutPos;
+      pickerOpen = false;
       const node = editor.state.doc.nodeAt(calloutPos);
       if (!node || node.type.name !== 'callout') return;
       const currentType = (node.attrs.type as CalloutTypeDef['id']) ?? 'note';
@@ -148,6 +153,7 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
 
   function close(): void {
     el.classList.remove('open');
+    pickerOpen = false;
   }
 
   document.addEventListener('mousedown', (e) => {
@@ -183,4 +189,8 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
 
 function escapeAttr(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
