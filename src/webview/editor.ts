@@ -21,16 +21,14 @@ import Callout, { preprocessMarkdownCallouts } from './extensions/callout';
 import Toggle from './extensions/toggle';
 import { createBubbleMenu } from './bubbleMenu';
 import { createBlockHandle } from './blockHandle';
-import { splitFrontmatter, countFrontmatterLines } from './frontmatter';
+import { splitFrontmatter, frontmatterInfo } from './frontmatter';
 
 const lowlight = createLowlight(common);
 
 let _editor: Editor | null = null;
 let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let _frontmatter = '';
-let _fmIndicator: HTMLElement | null = null;
-let _fmHostEl: HTMLElement | null = null;
-let _onSwitchToSource: (() => void) | null = null;
+let _onFrontmatterChange: ((info: { lines: number; kind: 'yaml' | 'toml' | 'none' }) => void) | null = null;
 let _mediaBaseUri = '';
 
 export function setMediaBaseUri(uri: string): void {
@@ -58,38 +56,21 @@ const ResolvedImage = Image.extend({
   },
 });
 
-export function setSourceViewSwitcher(fn: () => void): void {
-  _onSwitchToSource = fn;
+export function getFrontmatterInfo(): {
+  lines: number;
+  kind: 'yaml' | 'toml' | 'none';
+} {
+  return frontmatterInfo(_frontmatter);
 }
 
-function refreshFrontmatterIndicator(): void {
-  if (!_fmHostEl) return;
-  if (!_frontmatter) {
-    _fmIndicator?.remove();
-    _fmIndicator = null;
-    return;
-  }
-  const lines = countFrontmatterLines(_frontmatter);
-  if (!_fmIndicator) {
-    _fmIndicator = document.createElement('div');
-    _fmIndicator.className = 'fm-indicator';
-    _fmIndicator.setAttribute('role', 'button');
-    _fmIndicator.setAttribute('tabindex', '0');
-    _fmIndicator.dataset.tip = 'Frontmatter is preserved on save. Click to edit it in Source view.';
-    const click = (e: Event): void => {
-      e.preventDefault();
-      _onSwitchToSource?.();
-    };
-    _fmIndicator.addEventListener('click', click);
-    _fmIndicator.addEventListener('keydown', (e) => {
-      if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') click(e);
-    });
-    _fmHostEl.prepend(_fmIndicator);
-  }
-  _fmIndicator.innerHTML =
-    `<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V96H40V56ZM40,200V112H216v88Z"/></svg>` +
-    `<span class="fm-label">Frontmatter</span>` +
-    `<span class="fm-count">${lines} ${lines === 1 ? 'line' : 'lines'}</span>`;
+export function setFrontmatterChangeListener(
+  fn: (info: { lines: number; kind: 'yaml' | 'toml' | 'none' }) => void,
+): void {
+  _onFrontmatterChange = fn;
+}
+
+function notifyFrontmatterChange(): void {
+  _onFrontmatterChange?.(getFrontmatterInfo());
 }
 
 export type OnChangeCallback = (markdown: string) => void;
@@ -99,7 +80,6 @@ export function createEditor(
   initialMarkdown: string,
   onChange: OnChangeCallback,
 ): Editor {
-  _fmHostEl = element;
   const split = splitFrontmatter(initialMarkdown);
   _frontmatter = split.frontmatter;
   let body: string;
@@ -147,7 +127,7 @@ export function createEditor(
 
   createBubbleMenu(_editor);
   createBlockHandle(_editor);
-  refreshFrontmatterIndicator();
+  notifyFrontmatterChange();
   return _editor;
 }
 
@@ -163,7 +143,7 @@ export function updateContent(markdown: string): void {
     next = split.body;
   }
   _editor.commands.setContent(next);
-  refreshFrontmatterIndicator();
+  notifyFrontmatterChange();
 }
 
 // Reads the current markdown directly from the editor — bypasses the 500 ms
