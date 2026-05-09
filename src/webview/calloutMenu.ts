@@ -245,6 +245,12 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && el.classList.contains('open')) close();
   });
+  // Close on any scroll — the popover is anchored to a viewport position,
+  // so scrolling makes it visually disconnect from the callout it opened
+  // from. capture:true catches scrolls on every ancestor.
+  window.addEventListener('scroll', () => {
+    if (el.classList.contains('open')) close();
+  }, { capture: true, passive: true });
 
   // Open the menu when the user clicks the emoji icon inside a rendered callout.
   editor.view.dom.addEventListener('click', (e) => {

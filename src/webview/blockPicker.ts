@@ -560,6 +560,12 @@ export function createBlockPicker(editor: Editor): BlockPicker {
   document.addEventListener('mousedown', e => {
     if (!el.contains(e.target as Node)) close();
   });
+  // Close on scroll — same reason as the callout menu: the popover is
+  // anchored to a viewport position and would otherwise drift away from
+  // its trigger.
+  window.addEventListener('scroll', () => {
+    if (el.classList.contains('open')) close();
+  }, { capture: true, passive: true });
 
   return { open, close };
 }
