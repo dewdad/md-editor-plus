@@ -1,31 +1,26 @@
-export type ThemeSetting = 'auto' | 'light' | 'dark';
+export type ThemeSetting = 'auto' | 'light' | 'dark' | 'sepia' | 'claude';
+type Resolved = 'light' | 'dark' | 'sepia' | 'claude';
 
 let _currentSetting: ThemeSetting = 'auto';
 
-function resolveTheme(setting: ThemeSetting): 'light' | 'dark' {
-  if (setting === 'light') return 'light';
-  if (setting === 'dark') return 'dark';
+function resolveTheme(setting: ThemeSetting): Resolved {
+  if (setting === 'sepia')  return 'sepia';
+  if (setting === 'claude') return 'claude';
+  if (setting === 'light')  return 'light';
+  if (setting === 'dark')   return 'dark';
   return document.body.classList.contains('vscode-dark') ||
     document.body.classList.contains('vscode-high-contrast-dark')
     ? 'dark'
     : 'light';
 }
 
-function updateThemeButton(resolved: 'light' | 'dark'): void {
-  const btn = document.getElementById('btn-theme');
-  if (!btn) return;
-  if (_currentSetting === 'auto') {
-    btn.textContent = `Auto (${resolved === 'dark' ? '🌙' : '☀️'})`;
-  } else {
-    btn.textContent = resolved === 'dark' ? '🌙 Dark' : '☀️ Light';
-  }
-}
-
 export function applyTheme(setting: ThemeSetting): void {
   _currentSetting = setting;
   const resolved = resolveTheme(setting);
-  document.documentElement.classList.toggle('theme-dark', resolved === 'dark');
-  updateThemeButton(resolved);
+  const html = document.documentElement;
+  html.classList.toggle('theme-dark',   resolved === 'dark');
+  html.classList.toggle('theme-sepia',  resolved === 'sepia');
+  html.classList.toggle('theme-claude', resolved === 'claude');
 }
 
 export function initTheme(setting: ThemeSetting): void {

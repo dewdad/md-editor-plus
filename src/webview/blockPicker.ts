@@ -4,18 +4,34 @@ export interface BlockDef {
   id: string;
   label: string;
   description: string;
-  icon: string;
+  iconHtml: string;
   section: 'text' | 'lists' | 'media' | 'other';
   aliases?: string[];
   insert: (editor: Editor, pos: number) => void;
 }
+
+const ICO = {
+  paragraph: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M208,36H96a68,68,0,0,0,0,136h36v36a12,12,0,0,0,24,0V60h16V208a12,12,0,0,0,24,0V60h12a12,12,0,0,0,0-24ZM132,148H96a44,44,0,0,1,0-88h36Z"/></svg>`,
+  h1: `<span class="bm-into-text" style="font-weight:800;font-size:14px;letter-spacing:-.5px">H1</span>`,
+  h2: `<span class="bm-into-text" style="font-weight:700;font-size:13px;letter-spacing:-.4px">H2</span>`,
+  h3: `<span class="bm-into-text" style="font-weight:600;font-size:12px;letter-spacing:-.3px">H3</span>`,
+  bullet: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M76,64A12,12,0,0,1,88,52H216a12,12,0,0,1,0,24H88A12,12,0,0,1,76,64Zm140,52H88a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24Zm0,64H88a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24ZM44,112a16,16,0,1,0,16,16A16,16,0,0,0,44,112Zm0-64A16,16,0,1,0,60,64,16,16,0,0,0,44,48Zm0,128a16,16,0,1,0,16,16A16,16,0,0,0,44,176Z"/></svg>`,
+  ordered: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M228,128a12,12,0,0,1-12,12H116a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128ZM116,76H216a12,12,0,0,0,0-24H116a12,12,0,0,0,0,24ZM216,180H116a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24ZM44,59.31V104a12,12,0,0,0,24,0V40A12,12,0,0,0,50.64,29.27l-16,8a12,12,0,0,0,9.36,22Zm39.73,96.86a27.7,27.7,0,0,0-11.2-18.63A28.89,28.89,0,0,0,32.9,143a27.71,27.71,0,0,0-4.17,7.54,12,12,0,0,0,22.55,8.21,4,4,0,0,1,.58-1,4.78,4.78,0,0,1,6.5-.82,3.82,3.82,0,0,1,1.61,2.6,3.63,3.63,0,0,1-.77,2.77l-.13.17L30.39,200.82A12,12,0,0,0,40,220H72a12,12,0,0,0,0-24H64l14.28-19.11A27.48,27.48,0,0,0,83.73,156.17Z"/></svg>`,
+  task: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M228,128a12,12,0,0,1-12,12H128a12,12,0,0,1,0-24h88A12,12,0,0,1,228,128ZM128,76h88a12,12,0,0,0,0-24H128a12,12,0,0,0,0,24Zm88,104H128a12,12,0,0,0,0,24h88a12,12,0,0,0,0-24ZM79.51,39.51,56,63l-7.51-7.52a12,12,0,0,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Zm0,64L56,127l-7.51-7.52a12,12,0,1,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Zm0,64L56,191l-7.51-7.52a12,12,0,1,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Z"/></svg>`,
+  image: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg>`,
+  callout: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M176,232a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,232Zm40-128a87.55,87.55,0,0,1-33.64,69.21A16.24,16.24,0,0,0,176,186v6a16,16,0,0,1-16,16H96a16,16,0,0,1-16-16v-6a16,16,0,0,0-6.23-12.66A87.59,87.59,0,0,1,40,104.49C39.74,56.83,78.26,17.14,125.88,16A88,88,0,0,1,216,104Zm-16,0a72,72,0,0,0-73.74-72c-39,1-70.47,33.43-70.26,72.39a71.65,71.65,0,0,0,27.64,56.3A32,32,0,0,1,96,186v6h64v-6a32.15,32.15,0,0,1,12.47-25.35A71.65,71.65,0,0,0,200,104Zm-16.11-9.34a57.6,57.6,0,0,0-46.56-46.55,8,8,0,0,0-2.66,15.78c16.57,2.79,30.63,16.85,33.44,33.45A8,8,0,0,0,176,104a9,9,0,0,0,1.35-.11A8,8,0,0,0,183.89,94.66Z"/></svg>`,
+  toggle: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg>`,
+  quote: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M100,52H40A20,20,0,0,0,20,72v64a20,20,0,0,0,20,20H96v4a28,28,0,0,1-28,28,12,12,0,0,0,0,24,52.06,52.06,0,0,0,52-52V72A20,20,0,0,0,100,52Zm-4,80H44V76H96ZM216,52H156a20,20,0,0,0-20,20v64a20,20,0,0,0,20,20h56v4a28,28,0,0,1-28,28,12,12,0,0,0,0,24,52.06,52.06,0,0,0,52-52V72A20,20,0,0,0,216,52Zm-4,80H160V76h52Z"/></svg>`,
+  code: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M71.68,97.22,34.74,128l36.94,30.78a12,12,0,1,1-15.36,18.44l-48-40a12,12,0,0,1,0-18.44l48-40A12,12,0,0,1,71.68,97.22Zm176,21.56-48-40a12,12,0,1,0-15.36,18.44L221.26,128l-36.94,30.78a12,12,0,1,0,15.36,18.44l48-40a12,12,0,0,0,0-18.44ZM164.1,28.72a12,12,0,0,0-15.38,7.18l-64,176a12,12,0,0,0,7.18,15.37A11.79,11.79,0,0,0,96,228a12,12,0,0,0,11.28-7.9l64-176A12,12,0,0,0,164.1,28.72Z"/></svg>`,
+  hr: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M228,128a12,12,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128Z"/></svg>`,
+};
 
 export const BLOCK_DEFS: BlockDef[] = [
   {
     id: 'paragraph',
     label: 'Paragraph',
     description: 'Plain text block',
-    icon: '¶',
+    iconHtml: ICO.paragraph,
     section: 'text',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, { type: 'paragraph', content: [] }).run(),
@@ -24,7 +40,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'heading1',
     label: 'Heading 1',
     description: 'Big section title',
-    icon: 'H1',
+    iconHtml: ICO.h1,
     section: 'text',
     aliases: ['h1'],
     insert: (editor, pos) =>
@@ -34,7 +50,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'heading2',
     label: 'Heading 2',
     description: 'Sub-section heading',
-    icon: 'H2',
+    iconHtml: ICO.h2,
     section: 'text',
     aliases: ['h2'],
     insert: (editor, pos) =>
@@ -44,7 +60,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'heading3',
     label: 'Heading 3',
     description: 'Small heading',
-    icon: 'H3',
+    iconHtml: ICO.h3,
     section: 'text',
     aliases: ['h3'],
     insert: (editor, pos) =>
@@ -54,7 +70,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'bulletList',
     label: 'Bullet list',
     description: 'Unordered list',
-    icon: '•',
+    iconHtml: ICO.bullet,
     section: 'lists',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, {
@@ -66,7 +82,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'orderedList',
     label: 'Numbered list',
     description: 'Ordered list',
-    icon: '1.',
+    iconHtml: ICO.ordered,
     section: 'lists',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, {
@@ -78,7 +94,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'taskList',
     label: 'Task list',
     description: 'Checkbox list',
-    icon: '☑',
+    iconHtml: ICO.task,
     section: 'lists',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, {
@@ -90,7 +106,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'image',
     label: 'Image',
     description: 'Paste URL or drag & drop',
-    icon: '🖼',
+    iconHtml: ICO.image,
     section: 'media',
     insert: (editor, pos) => {
       const url = window.prompt('Image URL:');
@@ -101,7 +117,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'callout',
     label: 'Callout',
     description: 'Highlighted note block',
-    icon: '💡',
+    iconHtml: ICO.callout,
     section: 'media',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, {
@@ -114,7 +130,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'toggle',
     label: 'Toggle',
     description: 'Collapsible section',
-    icon: '▶',
+    iconHtml: ICO.toggle,
     section: 'media',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, {
@@ -127,7 +143,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'blockquote',
     label: 'Blockquote',
     description: 'Quoted text',
-    icon: '❝',
+    iconHtml: ICO.quote,
     section: 'other',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, {
@@ -139,7 +155,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'codeBlock',
     label: 'Code block',
     description: 'Syntax-highlighted code',
-    icon: '</>',
+    iconHtml: ICO.code,
     section: 'other',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, { type: 'codeBlock', attrs: { language: null } }).run(),
@@ -148,7 +164,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     id: 'horizontalRule',
     label: 'Divider',
     description: 'Horizontal rule',
-    icon: '—',
+    iconHtml: ICO.hr,
     section: 'other',
     insert: (editor, pos) =>
       editor.chain().focus().insertContentAt(pos, { type: 'horizontalRule' }).run(),
@@ -216,7 +232,7 @@ export function createBlockPicker(editor: Editor): BlockPicker {
         const row = document.createElement('div');
         row.className = 'block-picker-item';
         row.dataset.idx = String(globalIdx);
-        row.innerHTML = `<span class="block-picker-icon">${block.icon}</span><span class="block-picker-label">${block.label}</span>`;
+        row.innerHTML = `<span class="block-picker-icon">${block.iconHtml}</span><span class="block-picker-label">${block.label}</span>`;
         row.addEventListener('mousedown', e => { e.preventDefault(); select(block); });
         list.appendChild(row);
         globalIdx++;
@@ -235,6 +251,11 @@ export function createBlockPicker(editor: Editor): BlockPicker {
   function select(block: BlockDef): void {
     block.insert(editor, currentPos);
     close();
+    // Focus editor and scroll to the newly inserted block so cursor shows insertion point
+    setTimeout(() => {
+      editor.commands.focus();
+      editor.commands.scrollIntoView();
+    }, 30);
   }
 
   input.addEventListener('input', () => {

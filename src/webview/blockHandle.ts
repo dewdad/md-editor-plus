@@ -93,6 +93,23 @@ export function createBlockHandle(editor: Editor): void {
       );
     });
     dragIcon.addEventListener('mouseleave', () => hideTooltip(tooltip));
+
+    // Hide the global block handle when the cursor is over a code block —
+    // code blocks have their own per-line drag in the gutter. Use mousemove
+    // (not a mutation observer on the handle's style) so we never get stuck
+    // in the wrong state if the extension toggles via class changes.
+    let hideCb = false;
+    document.addEventListener('mousemove', (e) => {
+      const t = e.target as HTMLElement | null;
+      // Don't change state while hovering the handle itself — keep last value
+      if (t?.closest?.('.drag-handle')) return;
+      const overCb = !!t?.closest?.('.ProseMirror .cb');
+      if (overCb !== hideCb) {
+        hideCb = overCb;
+        handleEl.classList.toggle('hide-cb', overCb);
+      }
+    });
+
   }, 100);
 
   // ⌘/ keyboard shortcut — opens picker at current cursor position

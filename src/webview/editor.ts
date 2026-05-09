@@ -20,11 +20,50 @@ import Callout from './extensions/callout';
 import Toggle from './extensions/toggle';
 import { createBubbleMenu } from './bubbleMenu';
 import { createBlockHandle } from './blockHandle';
+import { splitFrontmatter, countFrontmatterLines } from './frontmatter';
 
 const lowlight = createLowlight(common);
 
 let _editor: Editor | null = null;
 let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let _frontmatter = '';
+let _fmIndicator: HTMLElement | null = null;
+let _fmHostEl: HTMLElement | null = null;
+let _onSwitchToSource: (() => void) | null = null;
+
+export function setSourceViewSwitcher(fn: () => void): void {
+  _onSwitchToSource = fn;
+}
+
+function refreshFrontmatterIndicator(): void {
+  if (!_fmHostEl) return;
+  if (!_frontmatter) {
+    _fmIndicator?.remove();
+    _fmIndicator = null;
+    return;
+  }
+  const lines = countFrontmatterLines(_frontmatter);
+  if (!_fmIndicator) {
+    _fmIndicator = document.createElement('div');
+    _fmIndicator.className = 'fm-indicator';
+    _fmIndicator.setAttribute('role', 'button');
+    _fmIndicator.setAttribute('tabindex', '0');
+    _fmIndicator.dataset.tip = 'Frontmatter is preserved on save. Click to edit it in Source view.';
+    const click = (e: Event): void => {
+      e.preventDefault();
+      _onSwitchToSource?.();
+    };
+    _fmIndicator.addEventListener('click', click);
+    _fmIndicator.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') click(e);
+    });
+    _fmHostEl.prepend(_fmIndicator);
+  }
+  _fmIndicator.innerHTML =
+    `<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V96H40V56ZM40,200V112H216v88Z"/></svg>` +
+    `<span class="fm-label">Frontmatter</span>` +
+    `<span class="fm-count">${lines} ${lines === 1 ? 'line' : 'lines'}</span>`;
+}
 
 export type OnChangeCallback = (markdown: string) => void;
 
@@ -33,10 +72,17 @@ export function createEditor(
   initialMarkdown: string,
   onChange: OnChangeCallback,
 ): Editor {
+  _fmHostEl = element;
+  const split = splitFrontmatter(initialMarkdown);
+  _frontmatter = split.frontmatter;
+
   _editor = new Editor({
     element,
     extensions: [
-      StarterKit.configure({ codeBlock: false }),
+      StarterKit.configure({
+        codeBlock: false,
+        dropcursor: { color: '#2383e2', width: 3 },
+      }),
       CodeBlock.configure({ lowlight }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -55,28 +101,106 @@ export function createEditor(
       Toggle,
       GlobalDragHandle.configure({ dragHandleWidth: 48 }),
     ],
-    content: initialMarkdown,
+    content: split.body,
     onUpdate({ editor }) {
       if (_debounceTimer) clearTimeout(_debounceTimer);
       _debounceTimer = setTimeout(() => {
         const markdown = editor.storage.markdown.getMarkdown() as string;
-        onChange(markdown);
+        onChange(_frontmatter + markdown);
       }, 500);
     },
   });
 
   createBubbleMenu(_editor);
   createBlockHandle(_editor);
+  refreshFrontmatterIndicator();
   return _editor;
 }
 
 export function updateContent(markdown: string): void {
   if (!_editor) return;
-  _editor.commands.setContent(markdown);
+  const split = splitFrontmatter(markdown);
+  _frontmatter = split.frontmatter;
+  _editor.commands.setContent(split.body);
+  refreshFrontmatterIndicator();
 }
 
 export function destroyEditor(): void {
   if (_debounceTimer) clearTimeout(_debounceTimer);
   _editor?.destroy();
   _editor = null;
+}
+
+// ─── Source editor ──────────────────────────────────────────────────────────
+// The Code view renders the entire markdown inside a single CodeBlock node so
+// the existing CodeBlock NodeView (line numbers, line-drag, copy button, lowlight
+// syntax highlighting) is reused for free. The doc schema is locked to a single
+// codeBlock so users can't accidentally split out into other node types.
+
+import { Document } from '@tiptap/extension-document';
+import { Text } from '@tiptap/extension-text';
+import { HardBreak } from '@tiptap/extension-hard-break';
+import { createSourceBubbleMenu } from './sourceBubbleMenu';
+
+const SourceDocument = Document.extend({ content: 'codeBlock' });
+
+let _sourceEditor: Editor | null = null;
+let _sourceDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let _suppressSourceUpdate = false;
+
+function buildSourceContent(markdown: string): object {
+  return {
+    type: 'doc',
+    content: [
+      {
+        type: 'codeBlock',
+        attrs: { language: 'markdown' },
+        content: markdown ? [{ type: 'text', text: markdown }] : [],
+      },
+    ],
+  };
+}
+
+export function createSourceEditor(
+  element: HTMLElement,
+  initialMarkdown: string,
+  onChange: OnChangeCallback,
+): Editor {
+  _sourceEditor = new Editor({
+    element,
+    extensions: [
+      SourceDocument,
+      Text,
+      HardBreak,
+      CodeBlock.configure({ lowlight, defaultLanguage: 'markdown' }),
+    ],
+    content: buildSourceContent(initialMarkdown),
+    onUpdate({ editor }) {
+      if (_suppressSourceUpdate) return;
+      const md = editor.state.doc.firstChild?.textContent ?? '';
+      if (_sourceDebounceTimer) clearTimeout(_sourceDebounceTimer);
+      _sourceDebounceTimer = setTimeout(() => onChange(md), 500);
+    },
+  });
+  createSourceBubbleMenu(_sourceEditor);
+  return _sourceEditor;
+}
+
+export function updateSourceContent(markdown: string): void {
+  if (!_sourceEditor) return;
+  const current = _sourceEditor.state.doc.firstChild?.textContent ?? '';
+  if (current === markdown) return;
+  _suppressSourceUpdate = true;
+  _sourceEditor.commands.setContent(buildSourceContent(markdown), false);
+  _suppressSourceUpdate = false;
+}
+
+export function getSourceMarkdown(): string {
+  return _sourceEditor?.state.doc.firstChild?.textContent ?? '';
+}
+
+export function destroySourceEditor(): void {
+  if (_sourceDebounceTimer) clearTimeout(_sourceDebounceTimer);
+  _sourceEditor?.destroy();
+  _sourceEditor = null;
 }

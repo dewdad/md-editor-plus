@@ -2,24 +2,26 @@ import { Editor } from '@tiptap/core';
 import { BubbleMenuPlugin } from '@tiptap/extension-bubble-menu';
 import { PluginKey } from '@tiptap/pm/state';
 
-// All paths verified from @phosphor-icons/core assets/regular/
+// All paths verified from @phosphor-icons/core assets/bold/
 const P = {
-  textB:         'M178.48,115.7A44,44,0,0,0,148,40H80a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8h80a48,48,0,0,0,18.48-92.3ZM88,56h60a28,28,0,0,1,0,56H88Zm72,136H88V128h72a32,32,0,0,1,0,64Z',
-  textItalic:    'M200,56a8,8,0,0,1-8,8H157.77L115.1,192H144a8,8,0,0,1,0,16H64a8,8,0,0,1,0-16H98.23L140.9,64H112a8,8,0,0,1,0-16h80A8,8,0,0,1,200,56Z',
-  textUnderline: 'M200,224a8,8,0,0,1-8,8H64a8,8,0,0,1,0-16H192A8,8,0,0,1,200,224Zm-72-24a64.07,64.07,0,0,0,64-64V56a8,8,0,0,0-16,0v80a48,48,0,0,1-96,0V56a8,8,0,0,0-16,0v80A64.07,64.07,0,0,0,128,200Z',
-  textStrike:    'M224,128a8,8,0,0,1-8,8H175.93c9.19,7.11,16.07,17.2,16.07,32,0,13.34-7,25.7-19.75,34.79C160.33,211.31,144.61,216,128,216s-32.33-4.69-44.25-13.21C71,193.7,64,181.34,64,168a8,8,0,0,1,16,0c0,17.35,22,32,48,32s48-14.65,48-32c0-14.85-10.54-23.58-38.77-32H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM76.33,104a8,8,0,0,0,7.61-10.49A17.3,17.3,0,0,1,83.11,88c0-18.24,19.3-32,44.89-32,18.84,0,34.16,7.42,41,19.85a8,8,0,0,0,14-7.7C173.33,50.52,152.77,40,128,40,93.29,40,67.11,60.63,67.11,88a33.73,33.73,0,0,0,1.62,10.49A8,8,0,0,0,76.33,104Z',
-  code:          'M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z',
-  link:          'M240,88.23a54.43,54.43,0,0,1-16,37L189.25,160a54.27,54.27,0,0,1-38.63,16h-.05A54.63,54.63,0,0,1,96,119.84a8,8,0,0,1,16,.45A38.62,38.62,0,0,0,150.58,160h0a38.39,38.39,0,0,0,27.31-11.31l34.75-34.75a38.63,38.63,0,0,0-54.63-54.63l-11,11A8,8,0,0,1,135.7,59l11-11A54.65,54.65,0,0,1,224,48,54.86,54.86,0,0,1,240,88.23ZM109,185.66l-11,11A38.41,38.41,0,0,1,70.6,208h0a38.63,38.63,0,0,1-27.29-65.94L78,107.31A38.63,38.63,0,0,1,144,135.71a8,8,0,0,0,16,.45A54.86,54.86,0,0,0,144,96a54.65,54.65,0,0,0-77.27,0L32,130.75A54.62,54.62,0,0,0,70.56,224h0a54.28,54.28,0,0,0,38.64-16l11-11A8,8,0,0,0,109,185.66Z',
-  highlighter:   'M253.66,106.34a8,8,0,0,0-11.32,0L192,156.69,107.31,72l50.35-50.34a8,8,0,1,0-11.32-11.32L96,60.69A16,16,0,0,0,93.18,79.5L72,100.69a16,16,0,0,0,0,22.62L76.69,128,18.34,186.34a8,8,0,0,0,3.13,13.25l72,24A7.88,7.88,0,0,0,96,224a8,8,0,0,0,5.66-2.34L136,187.31l4.69,4.69a16,16,0,0,0,22.62,0l21.19-21.18A16,16,0,0,0,203.31,168l50.35-50.34A8,8,0,0,0,253.66,106.34ZM93.84,206.85l-55-18.35L88,139.31,124.69,176ZM152,180.69,83.31,112,104,91.31,172.69,160Z',
-  caretDown:     'M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z',
-  caretLeft:     'M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z',
-  quotes:        'M100,56H40A16,16,0,0,0,24,72v64a16,16,0,0,0,16,16h60v8a32,32,0,0,1-32,32,8,8,0,0,0,0,16,48.05,48.05,0,0,0,48-48V72A16,16,0,0,0,100,56Zm0,80H40V72h60ZM216,56H156a16,16,0,0,0-16,16v64a16,16,0,0,0,16,16h60v8a32,32,0,0,1-32,32,8,8,0,0,0,0,16,48.05,48.05,0,0,0,48-48V72A16,16,0,0,0,216,56Zm0,80H156V72h60Z',
-  listBullets:   'M80,64a8,8,0,0,1,8-8H216a8,8,0,0,1,0,16H88A8,8,0,0,1,80,64Zm136,56H88a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Zm0,64H88a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM44,52A12,12,0,1,0,56,64,12,12,0,0,0,44,52Zm0,64a12,12,0,1,0,12,12A12,12,0,0,0,44,116Zm0,64a12,12,0,1,0,12,12A12,12,0,0,0,44,180Z',
-  listNumbers:   'M224,128a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM104,72H216a8,8,0,0,0,0-16H104a8,8,0,0,0,0,16ZM216,184H104a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM43.58,55.16,48,52.94V104a8,8,0,0,0,16,0V40a8,8,0,0,0-11.58-7.16l-16,8a8,8,0,0,0,7.16,14.32ZM79.77,156.72a23.73,23.73,0,0,0-9.6-15.95,24.86,24.86,0,0,0-34.11,4.7,23.63,23.63,0,0,0-3.57,6.46,8,8,0,1,0,15,5.47,7.84,7.84,0,0,1,1.18-2.13,8.76,8.76,0,0,1,12-1.59A7.91,7.91,0,0,1,63.93,159a7.64,7.64,0,0,1-1.57,5.78,1,1,0,0,0-.08.11L33.59,203.21A8,8,0,0,0,40,216H72a8,8,0,0,0,0-16H56l19.08-25.53A23.47,23.47,0,0,0,79.77,156.72Z',
-  listChecks:    'M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM128,72h88a8,8,0,0,0,0-16H128a8,8,0,0,0,0,16Zm88,112H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16ZM82.34,42.34,56,68.69,45.66,58.34A8,8,0,0,0,34.34,69.66l16,16a8,8,0,0,0,11.32,0l32-32A8,8,0,0,0,82.34,42.34Zm0,64L56,132.69,45.66,122.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Zm0,64L56,196.69,45.66,186.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Z',
+  textB:         'M185.08,114.46A48,48,0,0,0,148,36H80A12,12,0,0,0,68,48V200a12,12,0,0,0,12,12h80a52,52,0,0,0,25.08-97.54ZM92,60h56a24,24,0,0,1,0,48H92Zm68,128H92V132h68a28,28,0,0,1,0,56Z',
+  textItalic:    'M204,56a12,12,0,0,1-12,12H160.65l-40,120H144a12,12,0,0,1,0,24H64a12,12,0,0,1,0-24H95.35l40-120H112a12,12,0,0,1,0-24h80A12,12,0,0,1,204,56Z',
+  textUnderline: 'M204,224a12,12,0,0,1-12,12H64a12,12,0,0,1,0-24H192A12,12,0,0,1,204,224Zm-76-28a68.07,68.07,0,0,0,68-68V56a12,12,0,0,0-24,0v72a44,44,0,0,1-88,0V56a12,12,0,0,0-24,0v72A68.07,68.07,0,0,0,128,196Z',
+  textStrike:    'M228,128a12,12,0,0,1-12,12H185.86A41.48,41.48,0,0,1,196,168c0,14.45-7.81,28.32-21.43,38.05C162,215.05,145.44,220,128,220s-34-4.95-46.57-13.95C67.81,196.32,60,182.45,60,168a12,12,0,0,1,24,0c0,15.18,20.15,28,44,28s44-12.82,44-28c0-12.76-9.3-20.18-35.35-28H40a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128ZM75.11,100a12,12,0,0,0,12-12c0-16,17.58-28,40.89-28,17.36,0,31.37,6.65,37.48,17.78a12,12,0,0,0,21-11.56C176.13,47.3,154.25,36,128,36,91,36,63.11,58.35,63.11,88A12,12,0,0,0,75.11,100Z',
+  code:          'M71.68,97.22,34.74,128l36.94,30.78a12,12,0,1,1-15.36,18.44l-48-40a12,12,0,0,1,0-18.44l48-40A12,12,0,0,1,71.68,97.22Zm176,21.56-48-40a12,12,0,1,0-15.36,18.44L221.26,128l-36.94,30.78a12,12,0,1,0,15.36,18.44l48-40a12,12,0,0,0,0-18.44ZM164.1,28.72a12,12,0,0,0-15.38,7.18l-64,176a12,12,0,0,0,7.18,15.37A11.79,11.79,0,0,0,96,228a12,12,0,0,0,11.28-7.9l64-176A12,12,0,0,0,164.1,28.72Z',
+  link:          'M117.18,188.74a12,12,0,0,1,0,17l-5.12,5.12A58.26,58.26,0,0,1,70.6,228h0A58.62,58.62,0,0,1,29.14,127.92L63.89,93.17a58.64,58.64,0,0,1,98.56,28.11,12,12,0,1,1-23.37,5.44,34.65,34.65,0,0,0-58.22-16.58L46.11,144.89A34.62,34.62,0,0,0,70.57,204h0a34.41,34.41,0,0,0,24.49-10.14l5.11-5.12A12,12,0,0,1,117.18,188.74ZM226.83,45.17a58.65,58.65,0,0,0-82.93,0l-5.11,5.11a12,12,0,0,0,17,17l5.12-5.12a34.63,34.63,0,1,1,49,49L175.1,145.86A34.39,34.39,0,0,1,150.61,156h0a34.63,34.63,0,0,1-33.69-26.72,12,12,0,0,0-23.38,5.44A58.64,58.64,0,0,0,150.56,180h.05a58.28,58.28,0,0,0,41.47-17.17l34.75-34.75a58.62,58.62,0,0,0,0-82.91Z',
+  highlighter:   'M252.49,107.51a12,12,0,0,0-17,0L192,151,113,72l43.52-43.51a12,12,0,0,0-17-17L93.17,57.86a20,20,0,0,0-4.72,20.72L69.17,97.86a20,20,0,0,0,0,28.28L71,128,15.51,183.51a12,12,0,0,0,4.7,19.87l72,24A11.8,11.8,0,0,0,96,228a12,12,0,0,0,8.49-3.52L136,193l1.86,1.86a20,20,0,0,0,28.28,0l19.27-19.27a20.27,20.27,0,0,0,6.59,1.13,19.86,19.86,0,0,0,14.14-5.86l46.35-46.34A12,12,0,0,0,252.49,107.51ZM92.76,202.27,46.21,186.76,88,145l31,31ZM152,175,96.49,119.52h0L89,112l15-15,63,63Z',
+  smiley:        'M178.39,158c-11,19.06-29.39,30-50.39,30s-39.36-10.93-50.39-30a12,12,0,0,1,20.78-12c3.89,6.73,12.91,18,29.61,18s25.72-11.28,29.61-18a12,12,0,1,1,20.78,12ZM236,128A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-24,0a84,84,0,1,0-84,84A84.09,84.09,0,0,0,212,128ZM92,124a16,16,0,1,0-16-16A16,16,0,0,0,92,124Zm72-32a16,16,0,1,0,16,16A16,16,0,0,0,164,92Z',
+  dotsThree:     'M144,128a16,16,0,1,1-16-16A16,16,0,0,1,144,128ZM60,112a16,16,0,1,0,16,16A16,16,0,0,0,60,112Zm136,0a16,16,0,1,0,16,16A16,16,0,0,0,196,112Z',
+  paragraph:     'M208,36H96a68,68,0,0,0,0,136h36v36a12,12,0,0,0,24,0V60h16V208a12,12,0,0,0,24,0V60h12a12,12,0,0,0,0-24ZM132,148H96a44,44,0,0,1,0-88h36Z',
+  listBullets:   'M76,64A12,12,0,0,1,88,52H216a12,12,0,0,1,0,24H88A12,12,0,0,1,76,64Zm140,52H88a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24Zm0,64H88a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24ZM44,112a16,16,0,1,0,16,16A16,16,0,0,0,44,112Zm0-64A16,16,0,1,0,60,64,16,16,0,0,0,44,48Zm0,128a16,16,0,1,0,16,16A16,16,0,0,0,44,176Z',
+  listNumbers:   'M228,128a12,12,0,0,1-12,12H116a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128ZM116,76H216a12,12,0,0,0,0-24H116a12,12,0,0,0,0,24ZM216,180H116a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24ZM44,59.31V104a12,12,0,0,0,24,0V40A12,12,0,0,0,50.64,29.27l-16,8a12,12,0,0,0,9.36,22Zm39.73,96.86a27.7,27.7,0,0,0-11.2-18.63A28.89,28.89,0,0,0,32.9,143a27.71,27.71,0,0,0-4.17,7.54,12,12,0,0,0,22.55,8.21,4,4,0,0,1,.58-1,4.78,4.78,0,0,1,6.5-.82,3.82,3.82,0,0,1,1.61,2.6,3.63,3.63,0,0,1-.77,2.77l-.13.17L30.39,200.82A12,12,0,0,0,40,220H72a12,12,0,0,0,0-24H64l14.28-19.11A27.48,27.48,0,0,0,83.73,156.17Z',
+  listChecks:    'M228,128a12,12,0,0,1-12,12H128a12,12,0,0,1,0-24h88A12,12,0,0,1,228,128ZM128,76h88a12,12,0,0,0,0-24H128a12,12,0,0,0,0,24Zm88,104H128a12,12,0,0,0,0,24h88a12,12,0,0,0,0-24ZM79.51,39.51,56,63l-7.51-7.52a12,12,0,0,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Zm0,64L56,127l-7.51-7.52a12,12,0,1,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Zm0,64L56,191l-7.51-7.52a12,12,0,1,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Z',
+  quotes:        'M100,52H40A20,20,0,0,0,20,72v64a20,20,0,0,0,20,20H96v4a28,28,0,0,1-28,28,12,12,0,0,0,0,24,52.06,52.06,0,0,0,52-52V72A20,20,0,0,0,100,52Zm-4,80H44V76H96ZM216,52H156a20,20,0,0,0-20,20v64a20,20,0,0,0,20,20h56v4a28,28,0,0,1-28,28,12,12,0,0,0,0,24,52.06,52.06,0,0,0,52-52V72A20,20,0,0,0,216,52Zm-4,80H160V76h52Z',
+  minus:         'M228,128a12,12,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128Z',
 } as const;
 
-function svg(path: string, size = 13): string {
+function svg(path: string, size = 20): string {
   return `<svg width="${size}" height="${size}" viewBox="0 0 256 256" fill="currentColor"><path d="${path}"/></svg>`;
 }
 
@@ -43,6 +45,96 @@ const HIGHLIGHT_COLORS: Array<{ value: string | null; label: string }> = [
   { value: '#9b5de566', label: 'Purple' },
 ];
 
+// Curated emoji set — useful for documents and notes
+const EMOJIS = [
+  '😀','😂','😍','🥰','😎','🤔','😢','😡','🙏','👍',
+  '👎','❤️','✅','❌','⚠️','💡','❓','❗','⭐','✨',
+  '🔥','🎯','🚀','📌','📝','📚','💻','📱','🎉','💯',
+  '🌟','🌈','🌸','🍀','☀️','🌙','⏰','🎨','📊','🎁',
+];
+
+// "Turn into" — converts the current block to a different type
+interface TurnIntoOption {
+  id: string;
+  label: string;
+  iconHtml: string;
+  isActive: (e: Editor) => boolean;
+  apply:    (e: Editor) => void;
+}
+
+const TURN_INTO: TurnIntoOption[] = [
+  {
+    id: 'paragraph',
+    label: 'Text',
+    iconHtml: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M208,36H96a68,68,0,0,0,0,136h36v36a12,12,0,0,0,24,0V60h16V208a12,12,0,0,0,24,0V60h12a12,12,0,0,0,0-24ZM132,148H96a44,44,0,0,1,0-88h36Z"/></svg>`,
+    isActive: e => e.isActive('paragraph'),
+    apply:    e => e.chain().focus().setParagraph().run(),
+  },
+  {
+    id: 'heading1',
+    label: 'Heading 1',
+    iconHtml: `<span class="bm-into-text" style="font-weight:800;font-size:14px;letter-spacing:-.5px">H1</span>`,
+    isActive: e => e.isActive('heading', { level: 1 }),
+    apply:    e => e.chain().focus().setHeading({ level: 1 }).run(),
+  },
+  {
+    id: 'heading2',
+    label: 'Heading 2',
+    iconHtml: `<span class="bm-into-text" style="font-weight:700;font-size:13px;letter-spacing:-.4px">H2</span>`,
+    isActive: e => e.isActive('heading', { level: 2 }),
+    apply:    e => e.chain().focus().setHeading({ level: 2 }).run(),
+  },
+  {
+    id: 'heading3',
+    label: 'Heading 3',
+    iconHtml: `<span class="bm-into-text" style="font-weight:600;font-size:12px;letter-spacing:-.3px">H3</span>`,
+    isActive: e => e.isActive('heading', { level: 3 }),
+    apply:    e => e.chain().focus().setHeading({ level: 3 }).run(),
+  },
+  {
+    id: 'bulletList',
+    label: 'Bullet list',
+    iconHtml: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M76,64A12,12,0,0,1,88,52H216a12,12,0,0,1,0,24H88A12,12,0,0,1,76,64Zm140,52H88a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24Zm0,64H88a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24ZM44,112a16,16,0,1,0,16,16A16,16,0,0,0,44,112Zm0-64A16,16,0,1,0,60,64,16,16,0,0,0,44,48Zm0,128a16,16,0,1,0,16,16A16,16,0,0,0,44,176Z"/></svg>`,
+    isActive: e => e.isActive('bulletList'),
+    apply:    e => e.chain().focus().toggleBulletList().run(),
+  },
+  {
+    id: 'orderedList',
+    label: 'Numbered list',
+    iconHtml: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M228,128a12,12,0,0,1-12,12H116a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128ZM116,76H216a12,12,0,0,0,0-24H116a12,12,0,0,0,0,24ZM216,180H116a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24ZM44,59.31V104a12,12,0,0,0,24,0V40A12,12,0,0,0,50.64,29.27l-16,8a12,12,0,0,0,9.36,22Zm39.73,96.86a27.7,27.7,0,0,0-11.2-18.63A28.89,28.89,0,0,0,32.9,143a27.71,27.71,0,0,0-4.17,7.54,12,12,0,0,0,22.55,8.21,4,4,0,0,1,.58-1,4.78,4.78,0,0,1,6.5-.82,3.82,3.82,0,0,1,1.61,2.6,3.63,3.63,0,0,1-.77,2.77l-.13.17L30.39,200.82A12,12,0,0,0,40,220H72a12,12,0,0,0,0-24H64l14.28-19.11A27.48,27.48,0,0,0,83.73,156.17Z"/></svg>`,
+    isActive: e => e.isActive('orderedList'),
+    apply:    e => e.chain().focus().toggleOrderedList().run(),
+  },
+  {
+    id: 'taskList',
+    label: 'Task list',
+    iconHtml: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M228,128a12,12,0,0,1-12,12H128a12,12,0,0,1,0-24h88A12,12,0,0,1,228,128ZM128,76h88a12,12,0,0,0,0-24H128a12,12,0,0,0,0,24Zm88,104H128a12,12,0,0,0,0,24h88a12,12,0,0,0,0-24ZM79.51,39.51,56,63l-7.51-7.52a12,12,0,0,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Zm0,64L56,127l-7.51-7.52a12,12,0,1,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Zm0,64L56,191l-7.51-7.52a12,12,0,1,0-17,17l16,16a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Z"/></svg>`,
+    isActive: e => e.isActive('taskList'),
+    apply:    e => e.chain().focus().toggleTaskList().run(),
+  },
+  {
+    id: 'blockquote',
+    label: 'Quote',
+    iconHtml: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M100,52H40A20,20,0,0,0,20,72v64a20,20,0,0,0,20,20H96v4a28,28,0,0,1-28,28,12,12,0,0,0,0,24,52.06,52.06,0,0,0,52-52V72A20,20,0,0,0,100,52Zm-4,80H44V76H96ZM216,52H156a20,20,0,0,0-20,20v64a20,20,0,0,0,20,20h56v4a28,28,0,0,1-28,28,12,12,0,0,0,0,24,52.06,52.06,0,0,0,52-52V72A20,20,0,0,0,216,52Zm-4,80H160V76h52Z"/></svg>`,
+    isActive: e => e.isActive('blockquote'),
+    apply:    e => e.chain().focus().toggleBlockquote().run(),
+  },
+  {
+    id: 'codeBlock',
+    label: 'Code block',
+    iconHtml: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M71.68,97.22,34.74,128l36.94,30.78a12,12,0,1,1-15.36,18.44l-48-40a12,12,0,0,1,0-18.44l48-40A12,12,0,0,1,71.68,97.22Zm176,21.56-48-40a12,12,0,1,0-15.36,18.44L221.26,128l-36.94,30.78a12,12,0,1,0,15.36,18.44l48-40a12,12,0,0,0,0-18.44ZM164.1,28.72a12,12,0,0,0-15.38,7.18l-64,176a12,12,0,0,0,7.18,15.37A11.79,11.79,0,0,0,96,228a12,12,0,0,0,11.28-7.9l64-176A12,12,0,0,0,164.1,28.72Z"/></svg>`,
+    isActive: e => e.isActive('codeBlock'),
+    apply:    e => e.chain().focus().toggleCodeBlock().run(),
+  },
+  {
+    id: 'horizontalRule',
+    label: 'Divider',
+    iconHtml: `<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M228,128a12,12,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128Z"/></svg>`,
+    isActive: () => false,
+    apply:    e => e.chain().focus().setHorizontalRule().run(),
+  },
+];
+
 const DIV = `<span class="bm-div"></span>`;
 
 function swatchHtml(
@@ -52,46 +144,58 @@ function swatchHtml(
   return items
     .map(c =>
       c.value
-        ? `<button class="bm-swatch-item" data-${attr}="${c.value}" style="background:${c.value}" title="${c.label}"></button>`
-        : `<button class="bm-swatch-item bm-swatch-clear" data-${attr}="" title="${c.label}">⊘</button>`,
+        ? `<button class="bm-swatch-item" data-${attr}="${c.value}" style="background:${c.value}" data-tip="${c.label}"></button>`
+        : `<button class="bm-swatch-item bm-swatch-clear" data-${attr}="" data-tip="${c.label}">⊘</button>`,
     )
     .join('');
+}
+
+function emojiHtml(): string {
+  return EMOJIS
+    .map(e => `<button class="bm-swatch-item" data-emoji="${e}" data-tip="${e}">${e}</button>`)
+    .join('');
+}
+
+function turnIntoHtml(): string {
+  return TURN_INTO.map(o =>
+    `<button class="bm-into-item" data-into="${o.id}">
+      <span class="bm-into-icon">${o.iconHtml}</span>
+      <span class="bm-into-label">${o.label}</span>
+    </button>`
+  ).join('');
 }
 
 function buildEl(): HTMLElement {
   const el = document.createElement('div');
   el.className = 'bubble-menu';
   el.innerHTML = `
-    <div class="bubble-panel" id="bm-p1">
-      <button class="bm-btn" data-action="bold">${svg(P.textB)}</button>
-      <button class="bm-btn" data-action="italic">${svg(P.textItalic)}</button>
-      <button class="bm-btn" data-action="underline">${svg(P.textUnderline)}</button>
-      <button class="bm-btn" data-action="strike">${svg(P.textStrike)}</button>
+    <div class="bubble-row">
+      <button class="bm-btn" data-action="bold" data-tip-html="Bold<kbd>⌘B</kbd>">${svg(P.textB)}</button>
+      <button class="bm-btn" data-action="italic" data-tip-html="Italic<kbd>⌘I</kbd>">${svg(P.textItalic)}</button>
+      <button class="bm-btn" data-action="underline" data-tip-html="Underline<kbd>⌘U</kbd>">${svg(P.textUnderline)}</button>
+      <button class="bm-btn" data-action="strike" data-tip-html="Strikethrough<kbd>⌘⇧X</kbd>">${svg(P.textStrike)}</button>
       ${DIV}
-      <button class="bm-btn" data-action="code">${svg(P.code)}</button>
-      <button class="bm-btn" data-action="link">${svg(P.link)}</button>
-      ${DIV}
-      <button class="bm-btn" data-action="color">
-        <svg width="13" height="13" viewBox="0 0 256 256" fill="currentColor">
-          <path d="M212,208a8,8,0,0,1-7.41-4.98L180.09,148H75.91L51.41,203.02A8,8,0,0,1,36,197.02L120,16a8,8,0,0,1,16,0l84,181.02A8,8,0,0,1,212,208ZM83.09,132h89.82L128,37.84Z"/>
-          <rect id="bm-color-bar" x="36" y="224" width="184" height="18" rx="6" fill="#e55757"/>
+      <button class="bm-btn" data-action="code" data-tip-html="Inline code<kbd>⌘E</kbd>">${svg(P.code)}</button>
+    </div>
+    <div class="bubble-row">
+      <button class="bm-btn" data-action="link" data-tip-html="Add link<kbd>⌘K</kbd>">${svg(P.link)}</button>
+      <button class="bm-btn" data-action="color" data-tip="Text color">
+        <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor">
+          <path d="M216,208a12,12,0,0,1-11.41-7.97L180.09,148H75.91L51.41,200.03A12,12,0,0,1,40,208a12,12,0,0,1-11.41-15.97L113.09,12.97a12,12,0,0,1,21.82,0l84.5,179.06A12,12,0,0,1,216,208ZM87.09,124h81.82L128,42.84Z"/>
+          <rect id="bm-color-bar" x="32" y="224" width="192" height="20" rx="6" fill="#e55757"/>
         </svg>
       </button>
-      <button class="bm-btn" data-action="highlight">${svg(P.highlighter)}</button>
+      <button class="bm-btn" data-action="highlight" data-tip="Highlight">${svg(P.highlighter)}</button>
+      <button class="bm-btn" data-action="emoji" data-tip="Insert emoji">${svg(P.smiley)}</button>
       ${DIV}
-      <button class="bm-btn bm-dim" data-action="more">${svg(P.caretDown, 10)}</button>
+      <button class="bm-btn" data-action="more" data-tip="Turn into another block">${svg(P.dotsThree, 22)}</button>
     </div>
-    <div class="bubble-panel hidden" id="bm-p2">
-      <button class="bm-btn bm-dim" data-action="back">${svg(P.caretLeft, 10)}</button>
-      ${DIV}
-      <button class="bm-btn bm-lbl" data-action="heading1">H1</button>
-      <button class="bm-btn bm-lbl" data-action="heading2">H2</button>
-      <button class="bm-btn bm-lbl" data-action="heading3">H3</button>
-      ${DIV}
-      <button class="bm-btn" data-action="blockquote">${svg(P.quotes)}</button>
-      <button class="bm-btn" data-action="bulletList">${svg(P.listBullets)}</button>
-      <button class="bm-btn" data-action="orderedList">${svg(P.listNumbers)}</button>
-      <button class="bm-btn" data-action="taskList">${svg(P.listChecks)}</button>
+    <div class="bubble-into hidden" id="bm-into">
+      <div class="bubble-into-search">
+        <input type="text" class="bubble-into-input" placeholder="Filter…" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="bubble-into-title">Turn row into</div>
+      <div class="bubble-into-list">${turnIntoHtml()}</div>
     </div>
     <div class="bm-swatch-panel" id="bm-color-swatch">
       ${swatchHtml(TEXT_COLORS, 'color')}
@@ -99,56 +203,90 @@ function buildEl(): HTMLElement {
     <div class="bm-swatch-panel" id="bm-hl-swatch">
       ${swatchHtml(HIGHLIGHT_COLORS, 'hl')}
     </div>
+    <div class="bm-swatch-panel" id="bm-emoji-swatch">
+      ${emojiHtml()}
+    </div>
   `;
   document.body.appendChild(el);
   return el;
 }
 
 export function createBubbleMenu(editor: Editor): void {
-  const el          = buildEl();
-  const p1          = el.querySelector<HTMLElement>('#bm-p1')!;
-  const p2          = el.querySelector<HTMLElement>('#bm-p2')!;
-  const colorSwatch = el.querySelector<HTMLElement>('#bm-color-swatch')!;
-  const hlSwatch    = el.querySelector<HTMLElement>('#bm-hl-swatch')!;
-  const colorBar    = el.querySelector<SVGRectElement>('#bm-color-bar');
+  const el           = buildEl();
+  const colorSwatch  = el.querySelector<HTMLElement>('#bm-color-swatch')!;
+  const hlSwatch     = el.querySelector<HTMLElement>('#bm-hl-swatch')!;
+  const emojiSwatch  = el.querySelector<HTMLElement>('#bm-emoji-swatch')!;
+  const intoPanel    = el.querySelector<HTMLElement>('#bm-into')!;
+  const intoInput    = el.querySelector<HTMLInputElement>('.bubble-into-input')!;
+  const moreBtn      = el.querySelector<HTMLElement>('[data-action="more"]')!;
+  const colorBar     = el.querySelector<SVGRectElement>('#bm-color-bar');
+
+  function filterInto(query: string): void {
+    const q = query.trim().toLowerCase();
+    TURN_INTO.forEach(opt => {
+      const item = el.querySelector<HTMLElement>(`[data-into="${opt.id}"]`);
+      if (!item) return;
+      const visible = !q ||
+        opt.label.toLowerCase().includes(q) ||
+        opt.id.toLowerCase().includes(q);
+      item.style.display = visible ? '' : 'none';
+    });
+  }
+
+  let highlightedBlock: HTMLElement | null = null;
+
+  function highlightBlock(): void {
+    unhighlightBlock();
+    const { from } = editor.state.selection;
+    const $pos = editor.state.doc.resolve(from);
+    let depth = $pos.depth;
+    while (depth > 1) depth--;
+    const blockStart = $pos.before(depth);
+    const dom = editor.view.nodeDOM(blockStart);
+    if (dom instanceof HTMLElement) {
+      dom.classList.add('bm-target-block');
+      highlightedBlock = dom;
+    }
+  }
+
+  function unhighlightBlock(): void {
+    if (highlightedBlock) {
+      highlightedBlock.classList.remove('bm-target-block');
+      highlightedBlock = null;
+    }
+  }
 
   editor.registerPlugin(
     BubbleMenuPlugin({
       pluginKey:    new PluginKey('bubbleMenu'),
       editor,
       element:      el,
-      tippyOptions: { duration: 100, placement: 'top' },
+      tippyOptions: { duration: 100, placement: 'bottom' },
       shouldShow:   ({ state }) => !state.selection.empty,
       updateDelay:  250,
     }),
   );
 
-  function showPanel(panel: 'p1' | 'p2'): void {
-    p1.classList.toggle('hidden', panel !== 'p1');
-    p2.classList.toggle('hidden', panel !== 'p2');
-    closeSwatch();
-  }
-
   function closeSwatch(): void {
     colorSwatch.classList.remove('open');
     hlSwatch.classList.remove('open');
+    emojiSwatch.classList.remove('open');
+  }
+
+  function closeInto(): void {
+    intoPanel.classList.add('hidden');
+    moreBtn.classList.remove('active');
+    unhighlightBlock();
   }
 
   function updateActive(): void {
     const map: Record<string, boolean> = {
-      bold:        editor.isActive('bold'),
-      italic:      editor.isActive('italic'),
-      underline:   editor.isActive('underline'),
-      strike:      editor.isActive('strike'),
-      code:        editor.isActive('code'),
-      link:        editor.isActive('link'),
-      heading1:    editor.isActive('heading', { level: 1 }),
-      heading2:    editor.isActive('heading', { level: 2 }),
-      heading3:    editor.isActive('heading', { level: 3 }),
-      blockquote:  editor.isActive('blockquote'),
-      bulletList:  editor.isActive('bulletList'),
-      orderedList: editor.isActive('orderedList'),
-      taskList:    editor.isActive('taskList'),
+      bold:      editor.isActive('bold'),
+      italic:    editor.isActive('italic'),
+      underline: editor.isActive('underline'),
+      strike:    editor.isActive('strike'),
+      code:      editor.isActive('code'),
+      link:      editor.isActive('link'),
     };
     for (const [action, active] of Object.entries(map)) {
       el.querySelector<HTMLElement>(`[data-action="${action}"]`)
@@ -158,19 +296,41 @@ export function createBubbleMenu(editor: Editor): void {
       const attrs = editor.getAttributes('textStyle');
       colorBar.setAttribute('fill', (attrs.color as string | undefined) ?? '#e55757');
     }
+    // Mark the active "Turn into" option for the current block
+    for (const opt of TURN_INTO) {
+      el.querySelector<HTMLElement>(`[data-into="${opt.id}"]`)
+        ?.classList.toggle('active', opt.isActive(editor));
+    }
   }
 
   el.addEventListener('click', e => {
-    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
+    const target = e.target as HTMLElement;
+
+    // Turn-into item clicked?
+    const intoItem = target.closest<HTMLElement>('[data-into]');
+    if (intoItem) {
+      e.stopPropagation();
+      const id = intoItem.dataset.into!;
+      const opt = TURN_INTO.find(o => o.id === id);
+      if (opt) {
+        unhighlightBlock();  // Remove highlight before transforming
+        opt.apply(editor);
+        closeInto();
+        updateActive();
+      }
+      return;
+    }
+
+    const btn = target.closest<HTMLElement>('[data-action]');
     if (!btn) { closeSwatch(); return; }
     e.stopPropagation();
 
     switch (btn.dataset.action) {
-      case 'bold':        editor.chain().focus().toggleBold().run();        break;
-      case 'italic':      editor.chain().focus().toggleItalic().run();      break;
-      case 'underline':   editor.chain().focus().toggleUnderline().run();   break;
-      case 'strike':      editor.chain().focus().toggleStrike().run();      break;
-      case 'code':        editor.chain().focus().toggleCode().run();        break;
+      case 'bold':      editor.chain().focus().toggleBold().run();      break;
+      case 'italic':    editor.chain().focus().toggleItalic().run();    break;
+      case 'underline': editor.chain().focus().toggleUnderline().run(); break;
+      case 'strike':    editor.chain().focus().toggleStrike().run();    break;
+      case 'code':      editor.chain().focus().toggleCode().run();      break;
       case 'link': {
         if (editor.isActive('link')) {
           editor.chain().focus().unsetLink().run();
@@ -180,19 +340,50 @@ export function createBubbleMenu(editor: Editor): void {
         }
         break;
       }
-      case 'color':       colorSwatch.classList.toggle('open'); hlSwatch.classList.remove('open'); break;
-      case 'highlight':   hlSwatch.classList.toggle('open');    colorSwatch.classList.remove('open'); break;
-      case 'more':        showPanel('p2'); break;
-      case 'back':        showPanel('p1'); break;
-      case 'heading1':    editor.chain().focus().toggleHeading({ level: 1 }).run(); break;
-      case 'heading2':    editor.chain().focus().toggleHeading({ level: 2 }).run(); break;
-      case 'heading3':    editor.chain().focus().toggleHeading({ level: 3 }).run(); break;
-      case 'blockquote':  editor.chain().focus().toggleBlockquote().run();  break;
-      case 'bulletList':  editor.chain().focus().toggleBulletList().run();  break;
-      case 'orderedList': editor.chain().focus().toggleOrderedList().run(); break;
-      case 'taskList':    editor.chain().focus().toggleTaskList().run();    break;
+      case 'color':     colorSwatch.classList.toggle('open'); hlSwatch.classList.remove('open'); emojiSwatch.classList.remove('open'); closeInto(); break;
+      case 'highlight': hlSwatch.classList.toggle('open');    colorSwatch.classList.remove('open'); emojiSwatch.classList.remove('open'); closeInto(); break;
+      case 'emoji':     emojiSwatch.classList.toggle('open'); colorSwatch.classList.remove('open'); hlSwatch.classList.remove('open'); closeInto(); break;
+      case 'more': {
+        closeSwatch();
+        const isOpen = !intoPanel.classList.contains('hidden');
+        if (!isOpen) {
+          // Opening: highlight the target block, reset filter, focus input
+          highlightBlock();
+          intoInput.value = '';
+          filterInto('');
+          intoPanel.classList.remove('hidden');
+          moreBtn.classList.add('active');
+          setTimeout(() => intoInput.focus({ preventScroll: true }), 30);
+        } else {
+          closeInto();
+        }
+        break;
+      }
     }
     updateActive();
+  });
+
+  // Search filter
+  intoInput.addEventListener('input', () => filterInto(intoInput.value));
+
+  intoInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeInto();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const visible = Array.from(el.querySelectorAll<HTMLElement>('[data-into]'))
+        .find(item => item.style.display !== 'none');
+      if (visible) {
+        const id = visible.dataset.into!;
+        const opt = TURN_INTO.find(o => o.id === id);
+        if (opt) {
+          opt.apply(editor);
+          closeInto();
+          updateActive();
+        }
+      }
+    }
   });
 
   colorSwatch.addEventListener('click', e => {
@@ -215,11 +406,24 @@ export function createBubbleMenu(editor: Editor): void {
     updateActive();
   });
 
-  editor.on('transaction', ({ editor: e }) => {
+  emojiSwatch.addEventListener('click', e => {
+    const item = (e.target as HTMLElement).closest<HTMLElement>('[data-emoji]');
+    if (!item) return;
+    const emoji = item.dataset.emoji!;
+    editor.chain().focus().insertContent(emoji).run();
+    emojiSwatch.classList.remove('open');
     updateActive();
-    if (e.state.selection.empty) showPanel('p1');
   });
 
-  document.addEventListener('click', closeSwatch);
+  // Reset menus when the bubble menu hides (selection becomes empty)
+  editor.on('transaction', ({ editor: e }) => {
+    updateActive();
+    if (e.state.selection.empty) {
+      closeSwatch();
+      closeInto();
+    }
+  });
+
+  document.addEventListener('click', () => { closeSwatch(); });
   updateActive();
 }
