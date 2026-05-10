@@ -539,12 +539,12 @@ export function createBlockPicker(editor: Editor): BlockPicker {
 
   function positionPopover(anchorEl: HTMLElement): void {
     const rect = anchorEl.getBoundingClientRect();
-    el.style.left = `${rect.left + window.scrollX}px`;
-    el.style.top  = `${rect.bottom + window.scrollY + 6}px`;
+    el.style.left = `${rect.left}px`;
+    el.style.top  = `${rect.bottom + 6}px`;
     requestAnimationFrame(() => {
       const pickerRect = el.getBoundingClientRect();
       if (pickerRect.bottom > window.innerHeight - 12) {
-        el.style.top = `${rect.top + window.scrollY - pickerRect.height - 6}px`;
+        el.style.top = `${rect.top - pickerRect.height - 6}px`;
       }
       input.focus();
     });
@@ -560,11 +560,14 @@ export function createBlockPicker(editor: Editor): BlockPicker {
   document.addEventListener('mousedown', e => {
     if (!el.contains(e.target as Node)) close();
   });
-  // Close on scroll — same reason as the callout menu: the popover is
-  // anchored to a viewport position and would otherwise drift away from
-  // its trigger.
-  window.addEventListener('scroll', () => {
-    if (el.classList.contains('open')) close();
+  // Close on scroll — the popover is anchored to a viewport position and
+  // would otherwise drift away from its trigger. Ignore scrolls that
+  // originate inside the picker itself (the list scrolls when items overflow).
+  window.addEventListener('scroll', (e) => {
+    if (!el.classList.contains('open')) return;
+    const target = e.target as Node | null;
+    if (target && el.contains(target)) return;
+    close();
   }, { capture: true, passive: true });
 
   return { open, close };

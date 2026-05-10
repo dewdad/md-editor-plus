@@ -227,10 +227,14 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
         <button class="seg-btn" data-theme="sepia" data-tip-html="<span class='tip-title'>Sepia</span><span class='tip-sub'>Warm paper tones, easy on the eyes</span><div class='tip-swatches'><span class='tip-swatch' style='background:#f4ecd8'></span><span class='tip-swatch' style='background:#e9dcc0'></span><span class='tip-swatch' style='background:#5b4636'></span></div>">${iSepia}</button>
         <button class="seg-btn" data-theme="dark" data-tip-html="<span class='tip-title'>Dark</span><span class='tip-sub'>Deep dark background</span><div class='tip-swatches'><span class='tip-swatch' style='background:#191919'></span><span class='tip-swatch' style='background:#2f2f2f'></span><span class='tip-swatch' style='background:#e7e7e7'></span></div>">${iMoon}</button>
       </div>
-      <div class="settings-row settings-row-sub" data-tip="Match VS Code's color theme automatically">
+      <div class="settings-row settings-row-sub" data-tip="Follow your OS's or IDE's light/dark mode automatically">
         <span class="settings-row-icon">${iDevices}</span>
-        <span class="settings-row-label">Sync with system</span>
-        <button class="toggle-switch" id="auto-theme-toggle" role="switch" aria-checked="false"></button>
+        <span class="settings-row-label">Sync with</span>
+        <div class="segmented compact" id="sync-seg">
+          <button class="seg-btn active" data-sync="off" data-tip="Use the manually selected theme">Off</button>
+          <button class="seg-btn" data-sync="os"  data-tip="Follow your operating system's light/dark mode">OS</button>
+          <button class="seg-btn" data-sync="ide" data-tip="Follow your editor's color theme">IDE</button>
+        </div>
       </div>
     </div>
     <div class="settings-section">

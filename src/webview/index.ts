@@ -356,10 +356,12 @@ function init(): void {
   pageWidthRow.addEventListener('click', exitFullWidth);
 
   type ManualTheme = 'light' | 'sepia' | 'claude' | 'dark';
+  type SyncMode = 'off' | 'os' | 'ide';
   const themeSeg = document.getElementById('theme-seg') as HTMLElement;
-  const autoToggle = document.getElementById('auto-theme-toggle') as HTMLElement;
+  const syncSeg  = document.getElementById('sync-seg')  as HTMLElement;
+  const syncBtns = Array.from(syncSeg.querySelectorAll<HTMLButtonElement>('.seg-btn'));
   let manualTheme: ManualTheme = 'light';
-  let autoEnabled = false;
+  let syncMode: SyncMode = 'off';
 
   function applyThemeState(): void {
     // When in code/source view and "Always dark: Code view" is on, force the
@@ -367,37 +369,39 @@ function init(): void {
     const sourceForcesDark =
       sourceMode && document.documentElement.classList.contains('source-always-dark');
     if (sourceForcesDark) applyTheme('dark');
-    else if (autoEnabled) applyTheme('auto');
+    else if (syncMode === 'os')  applyTheme('sync-os');
+    else if (syncMode === 'ide') applyTheme('sync-ide');
     else applyTheme(manualTheme);
     segActivate(themeBtns, 'theme', manualTheme);
-    themeSeg.classList.toggle('disabled', autoEnabled || sourceForcesDark);
-    autoToggle.classList.toggle('on', autoEnabled);
-    autoToggle.setAttribute('aria-checked', String(autoEnabled));
+    segActivate(syncBtns,  'sync',  syncMode);
+    themeSeg.classList.toggle('disabled', syncMode !== 'off' || sourceForcesDark);
     refreshDefaultsButtons();
   }
 
   function setManualTheme(theme: ManualTheme): void {
     manualTheme = theme;
-    autoEnabled = false;
+    syncMode = 'off';
     applyThemeState();
   }
 
-  function setAutoTheme(enabled: boolean): void {
-    autoEnabled = enabled;
+  function setSyncMode(mode: SyncMode): void {
+    syncMode = mode;
     applyThemeState();
   }
 
   function loadInitialTheme(setting: ThemeSetting): void {
-    if (setting === 'auto') {
-      autoEnabled = true;
+    if (setting === 'auto' || setting === 'sync-ide') {
+      syncMode = 'ide';
+    } else if (setting === 'sync-os') {
+      syncMode = 'os';
     } else {
-      autoEnabled = false;
+      syncMode = 'off';
       manualTheme = setting;
     }
     applyThemeState();
   }
 
-  autoToggle.addEventListener('click', () => setAutoTheme(!autoEnabled));
+  syncBtns.forEach(b => b.addEventListener('click', () => setSyncMode(b.dataset.sync as SyncMode)));
 
   // Wire up clicks
   viewBtns.forEach(b  => b.addEventListener('click', () => setView(b.dataset.view as 'preview' | 'source')));
@@ -599,7 +603,9 @@ function init(): void {
 
   function currentDefaults(): SavedDefaults {
     return {
-      theme:               (autoEnabled ? 'auto' : manualTheme) as ThemeSetting,
+      theme:               (syncMode === 'os' ? 'sync-os'
+                            : syncMode === 'ide' ? 'sync-ide'
+                            : manualTheme) as ThemeSetting,
       font:                (FONT_CLASSES.find(c => editorEl.classList.contains(c))?.replace('font-', '') as FontKind) ?? 'sans',
       textSize:            (TEXT_CLASSES.find(c => editorEl.classList.contains(c))?.replace('text-', '') as TextSize) ?? 'm',
       pageWidth:           parseInt(widthSlider.value, 10) || DEFAULT_WIDTH_PX,

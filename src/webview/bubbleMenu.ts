@@ -206,6 +206,11 @@ function buildEl(): HTMLElement {
     <div class="bm-swatch-panel" id="bm-emoji-swatch">
       ${emojiHtml()}
     </div>
+    <div class="bm-link-row" id="bm-link-row" style="display:none">
+      <input type="text" class="bm-link-row-input" id="bm-link-row-input" placeholder="Paste URL, press ↵" />
+      <button class="bm-link-row-icon bm-link-row-apply" id="bm-link-row-apply" title="Apply"><svg width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><polyline points="40,144 96,200 224,72"/></svg></button>
+      <button class="bm-link-row-icon bm-link-row-cancel" id="bm-link-row-cancel" title="Cancel"><svg width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round"><line x1="60" y1="60" x2="196" y2="196"/><line x1="196" y1="60" x2="60" y2="196"/></svg></button>
+    </div>
   `;
   document.body.appendChild(el);
   return el;
@@ -220,6 +225,11 @@ export function createBubbleMenu(editor: Editor): void {
   const intoInput    = el.querySelector<HTMLInputElement>('.bubble-into-input')!;
   const moreBtn      = el.querySelector<HTMLElement>('[data-action="more"]')!;
   const colorBar     = el.querySelector<SVGRectElement>('#bm-color-bar');
+  const linkRow      = el.querySelector<HTMLElement>('#bm-link-row')!;
+  const linkRowInput = el.querySelector<HTMLInputElement>('#bm-link-row-input')!;
+  const linkRowApply = el.querySelector<HTMLElement>('#bm-link-row-apply')!;
+  const linkRowCancel = el.querySelector<HTMLElement>('#bm-link-row-cancel')!;
+  const buttonRows   = Array.from(el.querySelectorAll<HTMLElement>(':scope > .bubble-row'));
 
   function filterInto(query: string): void {
     const q = query.trim().toLowerCase();
@@ -262,7 +272,12 @@ export function createBubbleMenu(editor: Editor): void {
       editor,
       element:      el,
       tippyOptions: { duration: 100, placement: 'bottom' },
-      shouldShow:   ({ state }) => !state.selection.empty,
+      shouldShow:   ({ state }) => {
+        // Keep the menu visible while the URL input is showing, even if focus
+        // moved out of the editor.
+        if (linkRow.style.display !== 'none') return true;
+        return !state.selection.empty;
+      },
       updateDelay:  250,
     }),
   );
@@ -278,6 +293,283 @@ export function createBubbleMenu(editor: Editor): void {
     moreBtn.classList.remove('active');
     unhighlightBlock();
   }
+
+  function openLinkRow(): void {
+    closeSwatch();
+    closeInto();
+    const existing = (editor.getAttributes('link').href as string | undefined) ?? '';
+    linkRowInput.value = existing;
+    buttonRows.forEach((r) => { r.style.display = 'none'; });
+    linkRow.style.display = 'flex';
+    setTimeout(() => { linkRowInput.focus(); linkRowInput.select(); }, 0);
+  }
+
+  function closeLinkRow(): void {
+    linkRow.style.display = 'none';
+    buttonRows.forEach((r) => { r.style.display = ''; });
+  }
+
+  function applyLinkRow(): void {
+    const url = linkRowInput.value.trim();
+    if (!url) { closeLinkRow(); return; }
+    editor.chain().focus().setLink({ href: url }).run();
+    closeLinkRow();
+  }
+
+  linkRowApply.addEventListener('mousedown', (e) => { e.preventDefault(); applyLinkRow(); }, true);
+  linkRowCancel.addEventListener('mousedown', (e) => { e.preventDefault(); closeLinkRow(); }, true);
+  linkRowInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); applyLinkRow(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeLinkRow(); }
+  });
+
+  // ── Floating link popover ───────────────────────────────────────────────
+  // Hover any link in the editor to show: open / edit / remove. Mounted on
+  // document.body so it isn't tied to bubble-menu visibility.
+  const ICON_OPEN   = `<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M228,104a12,12,0,0,1-24,0V69l-59.51,59.51a12,12,0,0,1-17-17L187,52H152a12,12,0,0,1,0-24h64a12,12,0,0,1,12,12Zm-44,24a12,12,0,0,0-12,12v64H52V84h64a12,12,0,0,0,0-24H48A20,20,0,0,0,28,80V208a20,20,0,0,0,20,20H176a20,20,0,0,0,20-20V140A12,12,0,0,0,184,128Z"/></svg>`;
+  const ICON_EDIT   = `<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M230.14,70.54,185.46,25.85a20,20,0,0,0-28.29,0L33.86,149.17A19.85,19.85,0,0,0,28,163.31V208a20,20,0,0,0,20,20H92.69a19.86,19.86,0,0,0,14.14-5.86L230.14,98.82a20,20,0,0,0,0-28.28ZM91,204H52V165l84-84,39,39ZM192,103,153,64l18.34-18.34,39,39Z"/></svg>`;
+  const ICON_UNLINK = `<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M195.8,60.2a28,28,0,0,0-39.51-.09L144.68,72.28a12,12,0,1,1-17.36-16.56L139,43.43l.2-.2a52,52,0,0,1,73.54,73.54l-.2.2-12.29,11.71a12,12,0,0,1-16.56-17.36l12.17-11.61A28,28,0,0,0,195.8,60.2ZM111.32,183.72,99.71,195.89a28,28,0,0,1-39.6-39.6l12.17-11.61a12,12,0,0,0-16.56-17.36L43.43,139l-.2.2a52,52,0,0,0,73.54,73.54l.2-.2,11.71-12.29a12,12,0,1,0-17.36-16.56ZM216,148H192a12,12,0,0,0,0,24h24a12,12,0,0,0,0-24ZM40,108H64a12,12,0,0,0,0-24H40a12,12,0,0,0,0,24Zm120,72a12,12,0,0,0-12,12v24a12,12,0,0,0,24,0V192A12,12,0,0,0,160,180ZM96,76a12,12,0,0,0,12-12V40a12,12,0,0,0-24,0V64A12,12,0,0,0,96,76Z"/></svg>`;
+  const ICON_CHECK  = `<svg width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><polyline points="40,144 96,200 224,72"/></svg>`;
+  const ICON_X      = `<svg width="12" height="12" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round"><line x1="60" y1="60" x2="196" y2="196"/><line x1="196" y1="60" x2="60" y2="196"/></svg>`;
+
+  const linkPop = document.createElement('div');
+  linkPop.className = 'link-pop';
+  linkPop.style.display = 'none';
+  linkPop.innerHTML = `
+    <div class="link-pop-view">
+      <a class="link-pop-href" target="_blank" rel="noopener noreferrer"></a>
+      <button class="link-pop-btn" data-tip="Open in browser" data-action="open">${ICON_OPEN}</button>
+      <button class="link-pop-btn" data-tip="Edit link" data-action="edit">${ICON_EDIT}</button>
+      <button class="link-pop-btn" data-tip="Remove link" data-action="remove">${ICON_UNLINK}</button>
+    </div>
+    <div class="link-pop-edit" style="display:none">
+      <input type="text" class="link-pop-input" placeholder="Paste URL, press ↵" />
+      <button class="link-pop-btn link-pop-btn-apply" data-action="apply" data-tip="Apply">${ICON_CHECK}</button>
+      <button class="link-pop-btn" data-action="cancel" data-tip="Cancel">${ICON_X}</button>
+    </div>
+  `;
+  document.body.appendChild(linkPop);
+
+  const lpView   = linkPop.querySelector<HTMLElement>('.link-pop-view')!;
+  const lpHref   = linkPop.querySelector<HTMLAnchorElement>('.link-pop-href')!;
+  const lpEdit   = linkPop.querySelector<HTMLElement>('.link-pop-edit')!;
+  const lpInput  = linkPop.querySelector<HTMLInputElement>('.link-pop-input')!;
+
+  let lpRange: { from: number; to: number } | null = null;
+  let lpHideTimer: ReturnType<typeof setTimeout> | null = null;
+  let lpEl: HTMLElement | null = null; // current link element being shown
+
+  function findLinkRange(domPos: number): { from: number; to: number; href: string } | null {
+    const $pos = editor.state.doc.resolve(domPos);
+    const linkType = editor.state.schema.marks.link;
+    if (!linkType) return null;
+    // Find the link mark covering this position
+    const parent = $pos.parent;
+    const offsetInParent = $pos.parentOffset;
+    let cursor = 0;
+    for (let i = 0; i < parent.childCount; i++) {
+      const child = parent.child(i);
+      const childEnd = cursor + child.nodeSize;
+      if (offsetInParent >= cursor && offsetInParent <= childEnd) {
+        const linkMark = child.marks.find((m) => m.type === linkType);
+        if (!linkMark) return null;
+        // Expand left/right while same link mark continues
+        let leftIdx = i, rightIdx = i;
+        let s = cursor, e = childEnd;
+        while (leftIdx > 0) {
+          const prev = parent.child(leftIdx - 1);
+          if (prev.marks.some((m) => m.type === linkType && m.attrs.href === linkMark.attrs.href)) {
+            s -= prev.nodeSize;
+            leftIdx--;
+          } else break;
+        }
+        while (rightIdx < parent.childCount - 1) {
+          const next = parent.child(rightIdx + 1);
+          if (next.marks.some((m) => m.type === linkType && m.attrs.href === linkMark.attrs.href)) {
+            e += next.nodeSize;
+            rightIdx++;
+          } else break;
+        }
+        const parentStart = $pos.start();
+        return { from: parentStart + s, to: parentStart + e, href: linkMark.attrs.href as string };
+      }
+      cursor = childEnd;
+    }
+    return null;
+  }
+
+  function showLinkPop(anchor: HTMLElement, href: string): void {
+    if (lpHideTimer) { clearTimeout(lpHideTimer); lpHideTimer = null; }
+    lpEl = anchor;
+    lpHref.textContent = href;
+    lpHref.href = href;
+    lpView.style.display = 'flex';
+    lpEdit.style.display = 'none';
+    linkPop.style.display = 'block';
+    // Position above the link
+    const r = anchor.getBoundingClientRect();
+    const popH = linkPop.offsetHeight || 38;
+    let top = r.top - popH - 8;
+    if (top < 8) top = r.bottom + 8;
+    let left = r.left;
+    const maxLeft = window.innerWidth - linkPop.offsetWidth - 8;
+    if (left > maxLeft) left = maxLeft;
+    if (left < 8) left = 8;
+    linkPop.style.top = `${top}px`;
+    linkPop.style.left = `${left}px`;
+  }
+
+  function isEditing(): boolean {
+    return lpEdit.style.display !== 'none' && linkPop.style.display !== 'none';
+  }
+
+  function scheduleHideLinkPop(): void {
+    // While editing the URL the popover must stay open until the user
+    // explicitly applies, cancels, or clicks outside.
+    if (isEditing()) return;
+    if (lpHideTimer) clearTimeout(lpHideTimer);
+    lpHideTimer = setTimeout(() => {
+      linkPop.style.display = 'none';
+      lpEl = null;
+      lpRange = null;
+    }, 220);
+  }
+
+  function cancelHide(): void {
+    if (lpHideTimer) { clearTimeout(lpHideTimer); lpHideTimer = null; }
+  }
+
+  function closeLinkPopHard(): void {
+    if (lpHideTimer) { clearTimeout(lpHideTimer); lpHideTimer = null; }
+    linkPop.style.display = 'none';
+    lpView.style.display = 'flex';
+    lpEdit.style.display = 'none';
+    lpEl = null;
+    lpRange = null;
+  }
+
+  // While editing, click anywhere outside the popover closes it.
+  document.addEventListener('mousedown', (e) => {
+    if (!isEditing()) return;
+    const t = e.target as Node;
+    if (linkPop.contains(t)) return;
+    closeLinkPopHard();
+  });
+
+  // Hover detection on links inside the editor
+  editor.view.dom.addEventListener('mouseover', (e) => {
+    const t = e.target as HTMLElement;
+    const a = t.closest?.('a') as HTMLElement | null;
+    if (!a || !editor.view.dom.contains(a)) return;
+    const href = a.getAttribute('href') ?? '';
+    if (!href) return;
+    // Locate the link's PM range so edit/remove operate on the right span
+    const pos = editor.view.posAtDOM(a, 0);
+    if (pos != null) {
+      const range = findLinkRange(pos);
+      lpRange = range ? { from: range.from, to: range.to } : null;
+    }
+    showLinkPop(a, href);
+  });
+  editor.view.dom.addEventListener('mouseout', (e) => {
+    const t = e.target as HTMLElement;
+    const a = t.closest?.('a');
+    if (!a) return;
+    // Only schedule hide if the relatedTarget is not the popover itself
+    const next = (e as MouseEvent).relatedTarget as Node | null;
+    if (next && linkPop.contains(next)) return;
+    scheduleHideLinkPop();
+  });
+  // Mouse over the popover keeps it open
+  linkPop.addEventListener('mouseenter', cancelHide);
+  linkPop.addEventListener('mouseleave', scheduleHideLinkPop);
+
+  // Suppress default click-navigation on links — we drive it via the popover
+  editor.view.dom.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement).closest?.('a');
+    if (a && editor.view.dom.contains(a)) e.preventDefault();
+  });
+
+  // Popover button actions
+  linkPop.addEventListener('mousedown', (e) => {
+    const t = e.target as HTMLElement;
+    const btn = t.closest<HTMLElement>('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action!;
+    if (action === 'open') {
+      e.preventDefault();
+      e.stopPropagation();
+      const vs = (window as unknown as {
+        __mdViewerVscode?: { postMessage: (m: unknown) => void };
+      }).__mdViewerVscode;
+      if (vs && lpHref.href) {
+        vs.postMessage({ type: 'openExternal', url: lpHref.href });
+      }
+      return;
+    }
+    if (action === 'edit') {
+      e.preventDefault();
+      e.stopPropagation();
+      // Switch popover to edit mode in place
+      lpInput.value = lpHref.href;
+      lpView.style.display = 'none';
+      lpEdit.style.display = 'flex';
+      setTimeout(() => { lpInput.focus(); lpInput.select(); }, 0);
+      return;
+    }
+    if (action === 'remove') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (lpRange) {
+        editor.chain()
+          .setTextSelection(lpRange)
+          .unsetMark('link')
+          .run();
+      }
+      linkPop.style.display = 'none';
+      return;
+    }
+    if (action === 'cancel') {
+      e.preventDefault();
+      e.stopPropagation();
+      lpView.style.display = 'flex';
+      lpEdit.style.display = 'none';
+      return;
+    }
+    if (action === 'apply') {
+      e.preventDefault();
+      e.stopPropagation();
+      applyLinkEdit();
+      return;
+    }
+  }, true);
+
+  function applyLinkEdit(): void {
+    const url = lpInput.value.trim();
+    if (!url || !lpRange) { closeLinkPopHard(); return; }
+    // Replace the existing link mark with one that has the new href.
+    // unsetMark + setMark is the bulletproof way; setLink alone sometimes
+    // doesn't refresh attrs when the mark already exists on the selection.
+    editor.chain()
+      .focus()
+      .setTextSelection(lpRange)
+      .unsetMark('link')
+      .setLink({ href: url })
+      .setTextSelection(lpRange.to)
+      .run();
+    closeLinkPopHard();
+  }
+
+  lpInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyLinkEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      lpView.style.display = 'flex';
+      lpEdit.style.display = 'none';
+    }
+  });
 
   function updateActive(): void {
     const map: Record<string, boolean> = {
@@ -335,8 +627,7 @@ export function createBubbleMenu(editor: Editor): void {
         if (editor.isActive('link')) {
           editor.chain().focus().unsetLink().run();
         } else {
-          const url = window.prompt('Enter URL:');
-          if (url) editor.chain().focus().setLink({ href: url }).run();
+          openLinkRow();
         }
         break;
       }

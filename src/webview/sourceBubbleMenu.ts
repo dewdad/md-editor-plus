@@ -178,17 +178,71 @@ export function createSourceBubbleMenu(editor: Editor): void {
   const row = document.createElement('div');
   row.className = 'bubble-row';
 
-  function promptForLink(): void {
+  // Inline URL input that replaces the button row in place. window.prompt is
+  // silently no-op'd in some VS Code webviews, so we render the input ourselves.
+  const linkRow = document.createElement('div');
+  linkRow.className = 'bubble-row bm-link-row';
+  linkRow.style.display = 'none';
+  const linkInput = document.createElement('input');
+  linkInput.type = 'text';
+  linkInput.placeholder = 'Paste URL and press Enter';
+  linkInput.className = 'bm-link-row-input';
+  const linkApply = document.createElement('button');
+  linkApply.type = 'button';
+  linkApply.className = 'bm-btn bm-link-row-apply';
+  linkApply.textContent = 'Apply';
+  const linkCancel = document.createElement('button');
+  linkCancel.type = 'button';
+  linkCancel.className = 'bm-btn bm-link-row-cancel';
+  linkCancel.textContent = '✕';
+  linkRow.append(linkInput, linkApply, linkCancel);
+
+  let savedSel: { from: number; to: number; text: string } | null = null;
+
+  function openLinkRow(): void {
     const sel = getSelection(editor);
     if (!sel) return;
+    savedSel = { from: sel.from, to: sel.to, text: sel.text };
     const existing = sel.text.match(/^\[([^\]]*)\]\(([^)]+)\)$/);
-    const url = window.prompt('Enter URL:', existing ? existing[2] : '');
-    if (url == null) return;
-    const trimmed = url.trim();
-    if (!trimmed) return;
-    const labelText = existing ? existing[1] : (sel.text || 'link');
-    replaceRange(editor, sel.from, sel.to, `[${labelText}](${trimmed})`);
+    linkInput.value = existing ? existing[2] : '';
+    row.style.display = 'none';
+    linkRow.style.display = 'flex';
+    setTimeout(() => { linkInput.focus(); linkInput.select(); }, 0);
   }
+
+  function closeLinkRow(): void {
+    linkRow.style.display = 'none';
+    row.style.display = '';
+    savedSel = null;
+  }
+
+  function applyLinkRow(): void {
+    if (!savedSel) return closeLinkRow();
+    const url = linkInput.value.trim();
+    if (!url) return closeLinkRow();
+    const inner = savedSel.text.match(/^\[([^\]]*)\]\([^)]+\)$/);
+    const labelText = inner ? inner[1] : (savedSel.text || 'link');
+    replaceRange(editor, savedSel.from, savedSel.to, `[${labelText}](${url})`);
+    closeLinkRow();
+  }
+
+  linkApply.addEventListener('mousedown', (e) => { e.preventDefault(); applyLinkRow(); }, true);
+  linkCancel.addEventListener('mousedown', (e) => { e.preventDefault(); closeLinkRow(); }, true);
+  linkInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); applyLinkRow(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeLinkRow(); }
+  });
+  // Document-level capture-phase listener — most aggressive way to catch the
+  // mousedown before any focus/blur dance can swallow it.
+  document.addEventListener('mousedown', (e) => {
+    const t = e.target as HTMLElement;
+    if (!t?.closest) return;
+    if (t.closest('.source-bubble .bm-btn[data-action="link"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      openLinkRow();
+    }
+  }, true);
 
   const buttons: BtnSpec[] = [];
   const reg = (el: HTMLButtonElement, isActive: BtnSpec['isActive']): HTMLButtonElement => {
@@ -267,18 +321,7 @@ export function createSourceBubbleMenu(editor: Editor): void {
   ));
 
   el.appendChild(row);
-
-  // Delegated handler for the Link button — listens at the bubble-menu level
-  // so the click event always reaches us even if the per-button handler is
-  // stopped/lost in the focus dance between editor blur and tippy hide.
-  el.addEventListener('mousedown', (e) => {
-    const t = e.target as HTMLElement;
-    if (t.closest?.('.bm-btn[data-action="link"]')) {
-      e.preventDefault();
-      e.stopPropagation();
-      promptForLink();
-    }
-  }, true);
+  el.appendChild(linkRow);
 
   function refreshActive(): void {
     const sel = getSelection(editor);
@@ -299,6 +342,9 @@ export function createSourceBubbleMenu(editor: Editor): void {
     editor,
     element: el,
     shouldShow: ({ state }) => {
+      // Keep the menu visible while the inline URL input is shown, even if
+      // focus has moved to the input (selection in editor stays intact).
+      if (linkRow.style.display !== 'none') return true;
       const { from, to } = state.selection;
       return from !== to;
     },

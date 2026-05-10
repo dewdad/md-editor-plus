@@ -114,9 +114,7 @@ Filename hover and ⋯ click open the same actions list, but each anchors its ow
 
 ## Display settings (Aa)
 
-![Display settings panel](media/visual-settings.png)
-
-Every visual setting is **runtime-only by default**. Change anything you like for the current session and it won't follow you to other files. Click **Save view as default** at the bottom to commit the current view as your global default; **Reset** clears your saved defaults and restores the built-in ones.
+![Display settings panel](media/visual-settings.png)Every visual setting is **runtime-only by default**. Change anything you like for the current session and it won't follow you to other files. Click **Save view as default** at the bottom to commit the current view as your global default; **Reset** clears your saved defaults and restores the built-in ones.
 
 ### Theme
 
@@ -201,9 +199,7 @@ Insert from the block picker, then edit cells inline. Add rows and columns from 
 
 ### Code blocks
 
-![Code block with dark theme and line gutter](media/code-dark.png)
-
-A first-class block, not just a `<pre>`:
+![Code block with dark theme and line gutter](media/code-dark.png)A first-class block, not just a `<pre>`:
 
 - **Syntax highlighting** for \~50 languages via [lowlight](https://github.com/wooorm/lowlight)
 - **Line-number gutter** with click-and-drag to **reorder lines** within the block
@@ -229,9 +225,7 @@ Hover any block (paragraph, heading, list, image, code block, anything) to surfa
 
 ### Bubble menu
 
-![Bubble menu floating above selected text](media/line-menu.png)
-
-Select any text and a contextual toolbar appears above the selection.
+![Bubble menu floating above selected text](media/line-menu.png)Select any text and a contextual toolbar appears above the selection.
 
 | Group | Buttons |
 | --- | --- |

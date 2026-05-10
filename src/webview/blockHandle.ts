@@ -54,12 +54,12 @@ function showTooltip(tooltip: HTMLElement, targetEl: HTMLElement, text: string):
   tooltip.innerHTML = text;
   tooltip.style.display = 'block';
   const rect = targetEl.getBoundingClientRect();
-  tooltip.style.left = `${rect.left + window.scrollX + rect.width / 2}px`;
-  tooltip.style.top  = `${rect.top  + window.scrollY - tooltip.offsetHeight - 6}px`;
+  tooltip.style.left = `${rect.left + rect.width / 2}px`;
+  tooltip.style.top  = `${rect.top - tooltip.offsetHeight - 6}px`;
   // Correct left after measuring width
   requestAnimationFrame(() => {
     const tw = tooltip.offsetWidth;
-    tooltip.style.left = `${rect.left + window.scrollX + rect.width / 2 - tw / 2}px`;
+    tooltip.style.left = `${rect.left + rect.width / 2 - tw / 2}px`;
   });
 }
 

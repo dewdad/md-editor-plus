@@ -219,12 +219,12 @@ export function createCalloutMenu(editor: Editor): CalloutMenu {
       render(currentType, currentEmoji);
       el.classList.add('open');
       const rect = anchorEl.getBoundingClientRect();
-      el.style.left = `${rect.left + window.scrollX}px`;
-      el.style.top = `${rect.bottom + window.scrollY + 6}px`;
+      el.style.left = `${rect.left}px`;
+      el.style.top = `${rect.bottom + 6}px`;
       requestAnimationFrame(() => {
         const r = el.getBoundingClientRect();
         if (r.bottom > window.innerHeight - 12) {
-          el.style.top = `${rect.top + window.scrollY - r.height - 6}px`;
+          el.style.top = `${rect.top - r.height - 6}px`;
         }
         if (r.right > window.innerWidth - 12) {
           el.style.left = `${window.innerWidth - r.width - 12}px`;

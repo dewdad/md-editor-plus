@@ -75,7 +75,16 @@
       "properties": {
         "mdEditorPlus.theme": {
           "type": "string",
-          "enum": ["auto", "light", "sepia", "claude", "dark"],
+          "enum": ["light", "sepia", "claude", "dark", "sync-os", "sync-ide", "auto"],
+          "enumDescriptions": [
+            "Light — Notion-style white",
+            "Sepia — warm paper",
+            "Claude — soft warm tones",
+            "Dark — deep neutrals",
+            "Follow your operating system's light/dark mode",
+            "Follow your editor's color theme",
+            "(Legacy) Same as sync-ide"
+          ],
           "default": "light",
           "description": "Default color theme (saved via 'Save view as default')"
         },

@@ -17,7 +17,15 @@ const Toggle = Node.create({
 
   addAttributes() {
     return {
-      summary: { default: 'Toggle' },
+      summary: {
+        default: 'Toggle',
+        parseHTML: (el: HTMLElement) => {
+          const s = el.querySelector(':scope > summary');
+          const text = s?.textContent?.trim();
+          return text || 'Toggle';
+        },
+        renderHTML: () => ({}),
+      },
     };
   },
 
@@ -29,9 +37,40 @@ const Toggle = Node.create({
     return [
       'details',
       mergeAttributes(HTMLAttributes),
-      ['summary', {}, node.attrs.summary as string],
+      ['summary', { contenteditable: 'false' }, node.attrs.summary as string],
       ['div', { class: 'toggle-content' }, 0],
     ];
+  },
+
+  addNodeView() {
+    return ({ node }) => {
+      const dom = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.contentEditable = 'false';
+      summary.textContent = (node.attrs.summary as string) || 'Toggle';
+      const content = document.createElement('div');
+      content.className = 'toggle-content';
+      dom.appendChild(summary);
+      dom.appendChild(content);
+
+      return {
+        dom,
+        contentDOM: content,
+        ignoreMutation(mutation: MutationRecord) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'open') {
+            return true;
+          }
+          if (summary.contains(mutation.target as Node)) return true;
+          return false;
+        },
+        update(updatedNode) {
+          if (updatedNode.type !== node.type) return false;
+          const next = (updatedNode.attrs.summary as string) || 'Toggle';
+          if (next !== summary.textContent) summary.textContent = next;
+          return true;
+        },
+      };
+    };
   },
 
   addStorage() {

@@ -2,14 +2,14 @@
 
 A Notion-style markdown block editor for VS Code. **Every feature below is live in this file** — open the block view to feel it, switch to **Code** view to see how it round-trips to plain Markdown.
 
-![MD Editor Plus rendering a Markdown file with the bubble menu open](media/MD-editor-plus.png)
-
----
+![MD Editor Plus rendering a Markdown file with the bubble menu open](media/MD-editor-plus.png)\---
 
 ## Headings
 
 # Heading 1
+
 ## Heading 2
+
 ### Heading 3
 
 Three heading levels with tight, confident line heights.
@@ -22,14 +22,14 @@ Every selection-driven control lives in the **bubble menu**. Select any of these
 
 - **Bold**, *italic*, ~~strikethrough~~, and `inline code`
 - A [named link to GitHub](https://github.com) and an autolink: <https://code.visualstudio.com>
-- Mix it up: a [**bold link**](https://example.com) or *`italic code`*
+- Mix it up: a [**bold link**](https://example.com) or `italic code`
 - Underlines and color/highlight are applied via the bubble menu — pick a swatch and watch it round-trip
 - Emoji from the bubble menu's picker: 🚀 📝 ✨ 🎨 🔥
 
 Keyboard shortcuts that work right now:
 
 | Shortcut | Action |
-|---|---|
+| --- | --- |
 | `⌘B` / `Ctrl+B` | Bold |
 | `⌘I` / `Ctrl+I` | Italic |
 | `⌘U` / `Ctrl+U` | Underline |
@@ -45,10 +45,15 @@ Keyboard shortcuts that work right now:
 ### Task list
 
 - [x] Install MD Editor Plus
+
 - [x] Open a Markdown file
+
 - [ ] Try the bubble menu on selected text
+
 - [ ] Drag a block by its `⠿` handle
+
 - [ ] Open the block picker with `⌘/`
+
 - [ ] Toggle "Always dark: Code Snippets" in the settings panel
 
 ### Bulleted list (with nesting)
@@ -80,27 +85,14 @@ Keyboard shortcuts that work right now:
 
 GitHub-flavored callouts render with a colored background and an icon.
 
-> [!NOTE]
-> Use **Note** for general context, links to related docs, or anything informational.
-
-> [!TIP]
-> Use **Tip** for shortcuts, optimizations, or the "you probably also want…" hint.
-
-> [!IMPORTANT]
-> Use **Important** when the reader needs to know this *before* they act on the rest of the doc.
-
-> [!WARNING]
-> Use **Warning** for things that will surprise people: breaking changes, side effects, footguns.
-
-> [!CAUTION]
-> Use **Caution** for the dangerous stuff. Data loss, irreversible operations, security gotchas.
-
+> [!NOTE] 💡
+> Use Note for general context, links to related docs, or anything informational. [!TIP] ✅ Use Tip for shortcuts, optimizations, or the "you probably also want…" hint. [!IMPORTANT] 📌 Use Important when the reader needs to know this before they act on the rest of the doc. [!WARNING] ⚠️ Use Warning for things that will surprise people: breaking changes, side effects, footguns. [!CAUTION] 🛑 Use Caution for the dangerous stuff. Data loss, irreversible operations, security gotchas.
 ---
 
 ## Tables
 
 | Feature | Status | Notes |
-|---|---|---|
+| --- | --- | --- |
 | Inline editing | ✅ | Click any block |
 | Bubble menu | ✅ | Appears on text select |
 | Block picker | ✅ | `⌘/` or `+` icon |
@@ -114,7 +106,7 @@ GitHub-flavored callouts render with a colored background and an icon.
 
 ## Code blocks
 
-Syntax highlighting for ~50 languages. Each block has a header, a line-number gutter (drag a line to reorder it), and a copy button.
+Syntax highlighting for \~50 languages. Each block has a header, a line-number gutter (drag a line to reorder it), and a copy button.
 
 ### TypeScript
 
@@ -172,7 +164,7 @@ code --install-extension md-editor-plus-0.1.0.vsix
 
 ### A long block (try "Shorten Code Snippets")
 
-Turn on **Shorten Code Snippets** in the settings panel — anything over ~12 lines collapses behind a Show more / Show less button.
+Turn on **Shorten Code Snippets** in the settings panel — anything over \~12 lines collapses behind a Show more / Show less button.
 
 ```css
 :root {
@@ -221,20 +213,13 @@ a:hover { border-bottom-color: currentColor; }
 
 Local image (extension icon, from `media/`):
 
-![MD Editor Plus icon](media/icon.png)
+![MD Editor Plus icon](media/icon.png)Vector logo (SVG):
 
-Vector logo (SVG):
+![Logo SVG](media/icon.svg)A reference-style image works too:
 
-![Logo SVG](media/icon.svg)
+![Claude icon](media/claude-icon.svg "Claude theme icon")&gt; \[!NOTE\] 💡
 
-A reference-style image works too:
-
-![Claude icon][claude-icon]
-
-[claude-icon]: media/claude-icon.svg "Claude theme icon"
-
-> [!NOTE]
-> Image paths render relative to the workspace root, so `media/icon.png` resolves the same way it does on GitHub.
+> Image paths render relative to the workspace root, so media/icon.png resolves the same way it does on GitHub.
 
 ---
 
@@ -242,11 +227,9 @@ A reference-style image works too:
 
 - Bare autolink: <https://code.visualstudio.com>
 - Inline link: [VS Code Marketplace](https://marketplace.visualstudio.com)
-- Reference link: [GitHub repo][repo]
-- Email: <aviran@atera.com>
+- Reference link: [GitHub repo](https://github.com/aviranrevach/md-editor-plus)
+- Email: [aviran@atera.com](mailto:aviran@atera.com)
 - Anchor link to a heading on this page: [jump to Tables](#tables)
-
-[repo]: https://github.com/aviranrevach/md-editor-plus
 
 ---
 
@@ -255,27 +238,24 @@ A reference-style image works too:
 Toggles round-trip as HTML `<details>` blocks. Click to expand.
 
 <details>
-<summary>How does the bubble menu decide where to appear?</summary>
+<summary>Toggle</summary>
 
-It listens to TipTap's `selectionUpdate` event, measures the selection's bounding rect, then flips above or below depending on viewport space. There's a 350 ms debounce so it doesn't flicker mid-drag.
+ToggleToggleHow does the bubble menu decide where to appear?It listens to TipTap's selectionUpdate event, measures the selection's bounding rect, then flips above or below depending on viewport space. There's a 350 ms debounce so it doesn't flicker mid-drag.
 
 </details>
-
 <details>
-<summary>What happens to my YAML frontmatter?</summary>
+<summary>Toggle</summary>
 
-It's stripped out before the editor parses the document, kept in a side buffer, and re-attached on save. When a file has frontmatter, a small numeric badge appears on the **Code** view-toggle button showing the line count — click it to jump to Code view and edit the YAML directly.
+ToggleToggleWhat happens to my YAML frontmatter?It's stripped out before the editor parses the document, kept in a side buffer, and re-attached on save. When a file has frontmatter, a small numeric badge appears on the Code view-toggle button showing the line count — click it to jump to Code view and edit the YAML directly.
 
 </details>
-
 <details>
-<summary>Can I use this on `.mdx` files?</summary>
+<summary>Toggle</summary>
 
-Yes — `.mdx` is registered as a supported extension. JSX expressions render as raw text in Preview; switch to **Code** view to edit them as Markdown source.
+ToggleToggleCan I use this on .mdx files?Yes — .mdx is registered as a supported extension. JSX expressions render as raw text in Preview; switch to Code view to edit them as Markdown source.
 
 </details>
-
----
+\\---
 
 ## Horizontal rules
 
@@ -285,9 +265,9 @@ The line below is a horizontal rule.
 
 …and the editor also renders standalone `***` and `___` rules.
 
-***
+---
 
-___
+---
 
 ---
 
@@ -303,5 +283,4 @@ Inline math isn't a built-in block, but you can write expressions as inline code
 
 ---
 
-*Made for developers who want their notes to look as good as their code.*
-[Made with MD Editor Plus](https://github.com/aviranrevach/md-editor-plus) · [Report a bug](https://github.com/aviranrevach/md-editor-plus/issues)
+*Made for developers who want their notes to look as good as their code.*[Made with MD Editor Plus](https://github.com/aviranrevach/md-editor-plus) · [Report a bug](https://github.com/aviranrevach/md-editor-plus/issues)
