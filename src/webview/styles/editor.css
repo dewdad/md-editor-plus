@@ -242,6 +242,40 @@ body {
 .actions-panel.hidden { display: none; }
 .actions-panel .settings-action { padding: 7px 8px; border-radius: 6px; }
 .actions-panel .settings-action svg { color: var(--text-secondary); flex-shrink: 0; }
+.actions-panel .settings-action-label { flex: 1; }
+.actions-panel .settings-action-caret {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  margin-inline-start: 8px;
+}
+.actions-panel .act-export-menu.submenu-open {
+  background: var(--block-hover);
+}
+.actions-panel .act-export-menu.submenu-open .settings-action-caret {
+  color: var(--text-primary);
+}
+
+/* Cascading submenu — floats next to the Export item in the actions panel.
+   Same visual treatment as the parent panel for continuity. */
+.actions-submenu {
+  position: fixed;
+  z-index: 1101;
+  min-width: 200px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+.theme-dark .actions-submenu {
+  box-shadow: 0 8px 28px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3);
+}
+.actions-submenu.hidden { display: none; }
+.actions-submenu .settings-action { padding: 7px 8px; border-radius: 6px; }
+.actions-submenu .settings-action svg { color: var(--text-secondary); flex-shrink: 0; }
 
 .settings-section { display: flex; flex-direction: column; gap: 6px; }
 
@@ -2326,4 +2360,62 @@ html.source-full-width #source-view {
   height: 1px;
   background: var(--border);
   margin: 6px 4px;
+}
+
+/* ── Print / PDF export ─────────────────────────────────────────────────
+   Triggered by the "Export to PDF" action — sets .is-printing on <html>
+   immediately so the browser's snapshot for the print dialog is already
+   styled. @media print covers the actual rendered page. */
+.is-printing #toolbar,
+.is-printing .settings-panel,
+.is-printing .actions-panel,
+.is-printing .block-picker,
+.is-printing .callout-menu,
+.is-printing .bubble-menu,
+.is-printing .drag-handle,
+.is-printing .block-handle-tooltip,
+.is-printing #source-view {
+  display: none !important;
+}
+.is-printing #editor {
+  margin: 0 auto !important;
+  max-width: none !important;
+  padding: 24px 32px !important;
+}
+
+@media print {
+  /* Hide all chrome and any popovers that might leak into the snapshot. */
+  #toolbar, .settings-panel, .actions-panel, .block-picker, .callout-menu,
+  .bubble-menu, .drag-handle, .block-handle-tooltip, #source-view {
+    display: none !important;
+  }
+  /* Force light-on-white regardless of selected theme — printing dark
+     themes wastes ink and looks bad. */
+  html, body, #editor {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+  }
+  #editor {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+  /* Avoid awkward page breaks inside atomic blocks. */
+  pre, table, blockquote, figure, .callout, details,
+  .ProseMirror img {
+    break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    break-after: avoid;
+  }
+  a { color: #1a4dff !important; text-decoration: underline; }
+  /* Re-enable code-block backgrounds (they normally use CSS variables we
+     just overrode). */
+  pre, code {
+    background: #f5f5f5 !important;
+    color: #1a1a1a !important;
+  }
+  /* Sensible default margins; users can override via the print dialog. */
+  @page { margin: 0.6in; }
 }

@@ -4,6 +4,7 @@ import editorCss from './styles/editor.css';
 import { createEditor, updateContent, createSourceEditor, updateSourceContent, getSourceMarkdown, getCurrentMarkdown, setFrontmatterChangeListener, setMediaBaseUri } from './editor';
 import { initTheme, applyTheme, ThemeSetting } from './theme';
 import { initTooltips } from './tooltip';
+import { buildHtmlExport } from './exportHtml';
 import { common, createLowlight } from 'lowlight';
 
 const lowlight = createLowlight(common);
@@ -428,13 +429,75 @@ function init(): void {
     toolbarEl.classList.toggle('panel-open', open);
   }
 
+  const submenuExport = document.getElementById('actions-submenu-export') as HTMLElement;
+  let submenuOpenTimer: ReturnType<typeof setTimeout> | null = null;
+  let submenuCloseTimer: ReturnType<typeof setTimeout> | null = null;
+  let submenuAnchor: HTMLElement | null = null;
+
+  function clearSubmenuTimers(): void {
+    if (submenuOpenTimer) { clearTimeout(submenuOpenTimer); submenuOpenTimer = null; }
+    if (submenuCloseTimer) { clearTimeout(submenuCloseTimer); submenuCloseTimer = null; }
+  }
+  function positionSubmenu(trigger: HTMLElement): void {
+    const triggerRect = trigger.getBoundingClientRect();
+    submenuExport.style.left = '0px';
+    submenuExport.style.top = '0px';
+    submenuExport.classList.remove('hidden');
+    const subRect = submenuExport.getBoundingClientRect();
+    // Default: align top edge of submenu with top edge of trigger row,
+    // and position to the right of the parent actions panel.
+    const panel = trigger.closest('.actions-panel') as HTMLElement | null;
+    const panelRect = panel?.getBoundingClientRect() ?? triggerRect;
+    let left = panelRect.right + 4;
+    if (left + subRect.width > window.innerWidth - 8) {
+      left = panelRect.left - subRect.width - 4;
+    }
+    let top = triggerRect.top - 6;
+    if (top + subRect.height > window.innerHeight - 8) {
+      top = Math.max(8, window.innerHeight - subRect.height - 8);
+    }
+    if (top < 8) top = 8;
+    submenuExport.style.left = `${left}px`;
+    submenuExport.style.top = `${top}px`;
+  }
+  function openSubmenu(trigger: HTMLElement): void {
+    clearSubmenuTimers();
+    submenuAnchor = trigger;
+    document.querySelectorAll<HTMLElement>('.act-export-menu')
+      .forEach((el) => el.classList.toggle('submenu-open', el === trigger));
+    positionSubmenu(trigger);
+  }
+  function closeSubmenu(): void {
+    clearSubmenuTimers();
+    submenuExport.classList.add('hidden');
+    document.querySelectorAll<HTMLElement>('.act-export-menu')
+      .forEach((el) => el.classList.remove('submenu-open'));
+    submenuAnchor = null;
+  }
+  function scheduleSubmenuOpen(trigger: HTMLElement): void {
+    if (submenuCloseTimer) { clearTimeout(submenuCloseTimer); submenuCloseTimer = null; }
+    if (submenuAnchor === trigger) return;
+    if (submenuOpenTimer) clearTimeout(submenuOpenTimer);
+    submenuOpenTimer = setTimeout(() => openSubmenu(trigger), 120);
+  }
+  function scheduleSubmenuClose(): void {
+    if (submenuOpenTimer) { clearTimeout(submenuOpenTimer); submenuOpenTimer = null; }
+    if (submenuCloseTimer) clearTimeout(submenuCloseTimer);
+    submenuCloseTimer = setTimeout(closeSubmenu, 250);
+  }
+
+  submenuExport.addEventListener('mouseenter', () => clearSubmenuTimers());
+  submenuExport.addEventListener('mouseleave', scheduleSubmenuClose);
+
   function closeDotsPanel(): void {
     actionsPanelDots.classList.add('hidden');
+    closeSubmenu();
     actionsBtn.classList.remove('active');
     syncToolbarPanelState();
   }
   function closeFilenamePanel(): void {
     actionsPanelFile.classList.add('hidden');
+    closeSubmenu();
     filenameEl?.classList.remove('active');
     syncToolbarPanelState();
   }
@@ -450,6 +513,21 @@ function init(): void {
 
   // Wire up action buttons inside both panels (each panel has its own DOM)
   function bindActions(panel: HTMLElement): void {
+    const exportTrigger = panel.querySelector<HTMLElement>('.act-export-menu');
+    exportTrigger?.addEventListener('mouseenter', () => scheduleSubmenuOpen(exportTrigger));
+    exportTrigger?.addEventListener('mouseleave', scheduleSubmenuClose);
+    // Click as an accessibility fallback (keyboard/Enter, touch).
+    exportTrigger?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (submenuAnchor === exportTrigger) closeSubmenu();
+      else openSubmenu(exportTrigger);
+    });
+    // Hovering any other row in the panel should dismiss the submenu so it
+    // doesn't linger over the wrong row.
+    panel.querySelectorAll<HTMLElement>('.settings-action').forEach((el) => {
+      if (el === exportTrigger) return;
+      el.addEventListener('mouseenter', scheduleSubmenuClose);
+    });
     panel.querySelector<HTMLElement>('.act-copy')?.addEventListener('click', () => {
       vscode.postMessage({ type: 'copyContent' });
       closeAllActionsPanels();
@@ -469,6 +547,36 @@ function init(): void {
   }
   bindActions(actionsPanelDots);
   bindActions(actionsPanelFile);
+
+  function buildExportContext(): {
+    filename: string;
+    themeClasses: string[];
+    editorClasses: string[];
+    pageWidthPx: number;
+    fullWidth: boolean;
+  } {
+    const themeClasses = ['theme-dark', 'theme-sepia', 'theme-claude']
+      .filter((c) => document.documentElement.classList.contains(c));
+    const editorClasses = Array.from(editorEl.classList)
+      .filter((c) => c.startsWith('font-') || c.startsWith('text-') || c.startsWith('width-'));
+    const fnEl = document.getElementById('toolbar-filename');
+    const filename = (fnEl?.textContent ?? 'document.md').trim();
+    const pageWidthPx = parseInt(widthSlider.value, 10) || 800;
+    const fullWidth = widthMode === 'full';
+    return { filename, themeClasses, editorClasses, pageWidthPx, fullWidth };
+  }
+  submenuExport.querySelector<HTMLElement>('.act-export-html')?.addEventListener('click', () => {
+    const ctx = buildExportContext();
+    const html = buildHtmlExport(editorEl, ctx);
+    vscode.postMessage({ type: 'exportHtml', html });
+    closeAllActionsPanels();
+  });
+  submenuExport.querySelector<HTMLElement>('.act-export-pdf')?.addEventListener('click', () => {
+    const ctx = buildExportContext();
+    const html = buildHtmlExport(editorEl, ctx);
+    vscode.postMessage({ type: 'exportPdf', html, filename: ctx.filename });
+    closeAllActionsPanels();
+  });
 
   // Settings dropdown toggle
   settingsBtn.addEventListener('click', e => {
@@ -539,12 +647,14 @@ function init(): void {
     }
     if (!actionsPanelDots.classList.contains('hidden')
         && !actionsPanelDots.contains(t)
-        && !actionsBtn.contains(t)) {
+        && !actionsBtn.contains(t)
+        && !submenuExport.contains(t)) {
       closeDotsPanel();
     }
     if (!actionsPanelFile.classList.contains('hidden')
         && !actionsPanelFile.contains(t)
-        && !(filenameEl?.contains(t))) {
+        && !(filenameEl?.contains(t))
+        && !submenuExport.contains(t)) {
       closeFilenamePanel();
     }
   });

@@ -1,4 +1,66 @@
 import * as vscode from 'vscode';
+import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
+import { spawn } from 'child_process';
+
+const CHROME_PATHS: Record<NodeJS.Platform, string[]> = {
+  darwin: [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/Applications/Arc.app/Contents/MacOS/Arc',
+  ],
+  linux: [
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/microsoft-edge',
+    '/usr/bin/brave-browser',
+  ],
+  win32: [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
+  ],
+  aix: [], freebsd: [], openbsd: [], sunos: [], android: [], haiku: [], cygwin: [], netbsd: [],
+};
+
+function findChromiumBinary(): string | null {
+  const candidates = CHROME_PATHS[os.platform()] ?? [];
+  for (const p of candidates) {
+    try {
+      fs.accessSync(p, fs.constants.X_OK);
+      return p;
+    } catch { /* try next */ }
+  }
+  return null;
+}
+
+function renderHtmlToPdf(chromePath: string, htmlPath: string, pdfPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(chromePath, [
+      '--headless',
+      '--disable-gpu',
+      '--no-sandbox',
+      '--no-pdf-header-footer',
+      '--virtual-time-budget=2000',
+      `--print-to-pdf=${pdfPath}`,
+      `file://${htmlPath}`,
+    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    proc.stderr?.on('data', (d) => { stderr += d.toString(); });
+    proc.on('error', reject);
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Chrome exited with code ${code}: ${stderr.slice(0, 400)}`));
+    });
+  });
+}
 
 export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
   private static readonly viewType = 'md-editor-plus.editor';
@@ -132,6 +194,91 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
         await vscode.env.clipboard.writeText(document.uri.fsPath);
         await vscode.window.showInformationMessage('File path copied to clipboard');
       }
+      if (msg.type === 'exportPdf') {
+        const html = (msg as unknown as { html?: unknown }).html;
+        const fname = (msg as unknown as { filename?: unknown }).filename;
+        if (typeof html !== 'string' || !html) return;
+        const base = (typeof fname === 'string' ? fname : 'document.md')
+          .replace(/\.[^.]+$/, '')
+          .replace(/[^a-zA-Z0-9_.\-]+/g, '_') || 'document';
+        const docDir = vscode.Uri.joinPath(document.uri, '..');
+
+        const chromePath = findChromiumBinary();
+        if (chromePath) {
+          // Direct headless PDF — one click, no print dialog.
+          const target = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.joinPath(docDir, `${base}.pdf`),
+            filters: { 'PDF': ['pdf'] },
+            saveLabel: 'Export',
+            title: 'Export as PDF',
+          });
+          if (!target) return;
+          const tmpHtml = path.join(os.tmpdir(), `md-editor-plus-${Date.now()}-${base}.html`);
+          try {
+            fs.writeFileSync(tmpHtml, html, 'utf8');
+            await renderHtmlToPdf(chromePath, tmpHtml, target.fsPath);
+          } catch (err) {
+            await vscode.window.showErrorMessage(`MD Editor Plus: PDF export failed — ${(err as Error).message}`);
+            return;
+          } finally {
+            try { fs.unlinkSync(tmpHtml); } catch { /* ignore */ }
+          }
+          const open = 'Open';
+          const choice = await vscode.window.showInformationMessage(
+            `Exported to ${target.fsPath.split(/[\\/]/).pop()}`,
+            open,
+          );
+          if (choice === open) await vscode.env.openExternal(target);
+          return;
+        }
+
+        // Fallback: open in default browser with an auto-print script so the
+        // system print dialog appears immediately.
+        const autoPrintHtml = html.replace(
+          '</body>',
+          `<script>window.addEventListener('load', () => setTimeout(window.print, 250));</script></body>`,
+        );
+        const tmpPath = path.join(os.tmpdir(), `md-editor-plus-${Date.now()}-${base}.html`);
+        const tmpUri = vscode.Uri.file(tmpPath);
+        try {
+          await vscode.workspace.fs.writeFile(tmpUri, Buffer.from(autoPrintHtml, 'utf8'));
+        } catch (err) {
+          await vscode.window.showErrorMessage(`MD Editor Plus: PDF export failed — ${(err as Error).message}`);
+          return;
+        }
+        await vscode.env.openExternal(tmpUri);
+        await vscode.window.showInformationMessage(
+          'No Chromium browser found for direct export — opened in your browser. Pick "Save as PDF" in the print dialog.',
+        );
+      }
+      if (msg.type === 'exportHtml') {
+        const html = (msg as unknown as { html?: unknown }).html;
+        if (typeof html !== 'string' || !html) return;
+        const base = (document.uri.path.split('/').pop() ?? 'document.md').replace(/\.[^.]+$/, '');
+        const dir = vscode.Uri.joinPath(document.uri, '..');
+        const defaultUri = vscode.Uri.joinPath(dir, `${base}.html`);
+        const target = await vscode.window.showSaveDialog({
+          defaultUri,
+          filters: { 'HTML': ['html', 'htm'] },
+          saveLabel: 'Export',
+          title: 'Export as HTML',
+        });
+        if (!target) return;
+        try {
+          await vscode.workspace.fs.writeFile(target, Buffer.from(html, 'utf8'));
+        } catch (err) {
+          await vscode.window.showErrorMessage(`MD Editor Plus: export failed — ${(err as Error).message}`);
+          return;
+        }
+        const open = 'Open';
+        const choice = await vscode.window.showInformationMessage(
+          `Exported to ${target.fsPath.split('/').pop()}`,
+          open,
+        );
+        if (choice === open) {
+          await vscode.env.openExternal(target);
+        }
+      }
       if (msg.type === 'duplicate') {
         const dir = vscode.Uri.joinPath(document.uri, '..');
         const base = document.uri.path.split('/').pop() ?? 'document.md';
@@ -183,6 +330,8 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
     const iSepia = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M232,44H160a43.86,43.86,0,0,0-32,13.85A43.86,43.86,0,0,0,96,44H24A12,12,0,0,0,12,56V200a12,12,0,0,0,12,12H96a20,20,0,0,1,20,20,12,12,0,0,0,24,0,20,20,0,0,1,20-20h72a12,12,0,0,0,12-12V56A12,12,0,0,0,232,44ZM96,188H36V68H96a20,20,0,0,1,20,20V192.81A43.79,43.79,0,0,0,96,188Zm124,0H160a43.71,43.71,0,0,0-20,4.83V88a20,20,0,0,1,20-20h60Z"/></svg>`;
     const iAa = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M90.86,50.89a12,12,0,0,0-21.72,0l-64,136a12,12,0,0,0,21.71,10.22L42.44,164h75.12l15.58,33.11a12,12,0,0,0,21.72-10.22ZM53.74,140,80,84.18,106.27,140ZM200,84c-13.85,0-24.77,3.86-32.45,11.48a12,12,0,1,0,16.9,17c3-3,8.26-4.52,15.55-4.52,11,0,20,7.18,20,16v4.39A47.28,47.28,0,0,0,200,124c-24.26,0-44,17.94-44,40s19.74,40,44,40a47.18,47.18,0,0,0,22-5.38A12,12,0,0,0,244,192V124C244,101.94,224.26,84,200,84Zm0,96c-11,0-20-7.18-20-16s9-16,20-16,20,7.18,20,16S211,180,200,180Z"/></svg>`;
     const iFolder = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M228,104a12,12,0,0,1-24,0V69l-59.51,59.51a12,12,0,0,1-17-17L187,52H152a12,12,0,0,1,0-24h64a12,12,0,0,1,12,12Zm-44,24a12,12,0,0,0-12,12v64H52V84h64a12,12,0,0,0,0-24H48A20,20,0,0,0,28,80V208a20,20,0,0,0,20,20H176a20,20,0,0,0,20-20V140A12,12,0,0,0,184,128Z"/></svg>`;
+    const iDownload = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M228,148v56a12,12,0,0,1-12,12H40a12,12,0,0,1-12-12V148a12,12,0,0,1,24,0v44H204V148a12,12,0,0,1,24,0ZM119.51,156.49a12,12,0,0,0,17,0l40-40a12,12,0,0,0-17-17L140,123V40a12,12,0,0,0-24,0v83L96.49,99.51a12,12,0,0,0-17,17Z"/></svg>`;
+    const iPdf = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M48,28A20,20,0,0,0,28,48V208a20,20,0,0,0,20,20H208a20,20,0,0,0,20-20V96a12,12,0,0,0-3.51-8.49l-56-56A12,12,0,0,0,160,28Zm4,24h96V96a12,12,0,0,0,12,12h44V204H52ZM168,57l27,27H168ZM112,160v8h8a12,12,0,0,1,0,24h-8v8a12,12,0,0,1-24,0V148a12,12,0,0,1,12-12h20a12,12,0,0,1,0,24Zm68,12a40,40,0,0,1-40,40h-4a12,12,0,0,1-12-12V148a12,12,0,0,1,12-12h4A40,40,0,0,1,180,176Zm-24-4a16,16,0,0,0-8-13.86V178a16,16,0,0,0,8-6Z"/></svg>`;
     const iDevices = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M224,72H212V64a28,28,0,0,0-28-28H40A28,28,0,0,0,12,64v88a28,28,0,0,0,28,28h96v12a28,28,0,0,0,28,28h60a28,28,0,0,0,28-28V100A28,28,0,0,0,224,72ZM40,156a4,4,0,0,1-4-4V64a4,4,0,0,1,4-4H184a4,4,0,0,1,4,4v8H164a28,28,0,0,0-28,28v56Zm188,36a4,4,0,0,1-4,4H164a4,4,0,0,1-4-4V100a4,4,0,0,1,4-4h60a4,4,0,0,1,4,4ZM124,208a12,12,0,0,1-12,12H88a12,12,0,0,1,0-24h24A12,12,0,0,1,124,208Zm88-84a12,12,0,0,1-12,12H188a12,12,0,0,1,0-24h12A12,12,0,0,1,212,124Z"/></svg>`;
     const iArrowsH = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M240.49,136.49l-32,32a12,12,0,0,1-17-17L203,140H53l11.52,11.51a12,12,0,0,1-17,17l-32-32a12,12,0,0,1,0-17l32-32a12,12,0,1,1,17,17L53,116H203l-11.52-11.51a12,12,0,0,1,17-17l32,32A12,12,0,0,1,240.49,136.49Z"/></svg>`;
     const iSliders = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M40,92H70.06a36,36,0,0,0,67.88,0H216a12,12,0,0,0,0-24H137.94a36,36,0,0,0-67.88,0H40a12,12,0,0,0,0,24Zm64-24A12,12,0,1,1,92,80,12,12,0,0,1,104,68Zm112,96H201.94a36,36,0,0,0-67.88,0H40a12,12,0,0,0,0,24h94.06a36,36,0,0,0,67.88,0H216a12,12,0,0,0,0-24Zm-48,24a12,12,0,1,1,12-12A12,12,0,0,1,168,188Z"/></svg>`;
@@ -310,16 +459,22 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
     </div>
   </div>
   <div class="actions-panel hidden" id="actions-panel-filename" data-anchor="filename">
-    <button class="settings-action act-copy" data-tip="Copy the entire markdown to clipboard">${iCopy}<span>Copy page content</span></button>
-    <button class="settings-action act-copy-path" data-tip="Copy the absolute file path to clipboard">${iLink}<span>Copy file path</span></button>
-    <button class="settings-action act-duplicate" data-tip="Save a copy of this file in the same folder">${iDuplicate}<span>Duplicate</span></button>
-    <button class="settings-action act-finder" data-tip="Reveal this file in your OS file browser">${iFolder}<span>Open in Finder</span></button>
+    <button class="settings-action act-copy" data-tip="Copy the entire markdown to clipboard">${iCopy}<span class="settings-action-label">Copy page content</span></button>
+    <button class="settings-action act-copy-path" data-tip="Copy the absolute file path to clipboard">${iLink}<span class="settings-action-label">Copy file path</span></button>
+    <button class="settings-action act-duplicate" data-tip="Save a copy of this file in the same folder">${iDuplicate}<span class="settings-action-label">Duplicate</span></button>
+    <button class="settings-action act-finder" data-tip="Reveal this file in your OS file browser">${iFolder}<span class="settings-action-label">Open in Finder</span></button>
+    <button class="settings-action act-export-menu" data-submenu="export">${iDownload}<span class="settings-action-label">Export</span><span class="settings-action-caret">›</span></button>
   </div>
   <div class="actions-panel hidden" id="actions-panel-dots" data-anchor="dots">
-    <button class="settings-action act-copy" data-tip="Copy the entire markdown to clipboard">${iCopy}<span>Copy page content</span></button>
-    <button class="settings-action act-copy-path" data-tip="Copy the absolute file path to clipboard">${iLink}<span>Copy file path</span></button>
-    <button class="settings-action act-duplicate" data-tip="Save a copy of this file in the same folder">${iDuplicate}<span>Duplicate</span></button>
-    <button class="settings-action act-finder" data-tip="Reveal this file in your OS file browser">${iFolder}<span>Open in Finder</span></button>
+    <button class="settings-action act-copy" data-tip="Copy the entire markdown to clipboard">${iCopy}<span class="settings-action-label">Copy page content</span></button>
+    <button class="settings-action act-copy-path" data-tip="Copy the absolute file path to clipboard">${iLink}<span class="settings-action-label">Copy file path</span></button>
+    <button class="settings-action act-duplicate" data-tip="Save a copy of this file in the same folder">${iDuplicate}<span class="settings-action-label">Duplicate</span></button>
+    <button class="settings-action act-finder" data-tip="Reveal this file in your OS file browser">${iFolder}<span class="settings-action-label">Open in Finder</span></button>
+    <button class="settings-action act-export-menu" data-submenu="export">${iDownload}<span class="settings-action-label">Export</span><span class="settings-action-caret">›</span></button>
+  </div>
+  <div class="actions-submenu hidden" id="actions-submenu-export" role="menu">
+    <button class="settings-action act-export-html" data-tip="Save the rendered view as a standalone HTML file">${iDownload}<span class="settings-action-label">Export to HTML</span></button>
+    <button class="settings-action act-export-pdf" data-tip="Render to PDF — uses headless Chrome/Edge if installed, otherwise opens the system print dialog">${iPdf}<span class="settings-action-label">Export to PDF</span></button>
   </div>
   <div id="editor"></div>
   <div id="source-view">
