@@ -2419,3 +2419,161 @@ html.source-full-width #source-view {
   /* Sensible default margins; users can override via the print dialog. */
   @page { margin: 0.6in; }
 }
+
+/* ── Outline panel ──────────────────────────────────────────────────────────
+   Lives in the left gutter (Google Docs style). Not a separate window — it
+   shares the editor's background and only marks itself with a subtle right
+   separator. Document content shifts right when the outline is shown so
+   nothing is obscured. */
+.outline-panel {
+  position: fixed;
+  top: 48px;
+  left: 0;
+  bottom: 0;
+  width: 240px;
+  background: var(--bg);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.outline-panel.hidden { display: none; }
+
+/* Push editor / source content right when the outline is visible so the
+   gutter is real space, not an overlay. Toolbar stays full-width above. */
+html.outline-visible #editor,
+html.outline-visible #source-view {
+  padding-left: 240px;
+}
+
+.outline-panel-list {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 14px 24px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.18) transparent;
+}
+
+/* Single continuous vertical rail down the left side of the list.
+   JS sizes its height to end at the last heading row. */
+.outline-rail {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 1.5px;
+  height: 0;
+  background: var(--border);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Accent segment that overlays the rail at the active heading row.
+   JS sets `top` and `height`. */
+.outline-active-marker {
+  position: absolute;
+  left: 17px;
+  width: 3px;
+  background: var(--link);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: top 0.15s ease, height 0.15s ease, opacity 0.12s ease;
+}
+.outline-active-marker.visible { opacity: 1; }
+.theme-dark .outline-panel-list {
+  scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+.outline-panel-list::-webkit-scrollbar { width: 6px; }
+.outline-panel-list::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 3px;
+}
+.theme-dark .outline-panel-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+}
+
+.outline-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 4px 6px 4px 16px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+  user-select: none;
+  transition: color 0.08s;
+  border-radius: 3px;
+}
+.outline-row:hover {
+  color: var(--text-primary);
+}
+.outline-row-l1 { color: var(--text-primary); font-weight: 500; }
+.outline-row-l2 { padding-left: 32px; }
+.outline-row-l3 { padding-left: 48px; font-size: 12px; }
+.outline-row.active,
+.outline-row.active.outline-row-l1 {
+  color: var(--link);
+  font-weight: 500;
+}
+
+.outline-row-caret {
+  width: 12px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-left: -4px;
+  transition: transform 0.12s, color 0.08s;
+  transform: rotate(90deg);
+  opacity: 0.5;
+}
+.outline-row-caret.collapsed { transform: rotate(0deg); }
+.outline-row-caret.hidden { visibility: hidden; }
+.outline-row:hover .outline-row-caret { opacity: 1; }
+.outline-row-caret:hover { color: var(--text-primary); }
+
+.outline-row-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outline-panel-empty {
+  padding: 24px 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+/* Hide the outline (and its gutter offset) when the source view is active. */
+html.source-mode-active .outline-panel { display: none !important; }
+html.source-mode-active.outline-visible #editor,
+html.source-mode-active.outline-visible #source-view,
+html.source-mode-active.outline-visible #toolbar { padding-left: 0; }
+#toolbar.source-active #outline-btn { display: none; }
+
+/* Narrow viewport — drop the gutter offset and let the panel overlay so the
+   document doesn't squeeze to nothing. */
+@media (max-width: 720px) {
+  .outline-panel { box-shadow: 6px 0 18px rgba(0,0,0,0.10); }
+  html.outline-visible #editor,
+  html.outline-visible #source-view,
+  html.outline-visible #toolbar { padding-left: 0; }
+}
+
+/* Print: hide the outline and undo any gutter offsets. */
+@media print {
+  .outline-panel { display: none !important; }
+  html.outline-visible #editor,
+  html.outline-visible #source-view,
+  html.outline-visible #toolbar { padding-left: 0 !important; }
+}
+.is-printing .outline-panel { display: none !important; }

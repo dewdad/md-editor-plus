@@ -20,6 +20,7 @@ import { Markdown } from 'tiptap-markdown';
 import Callout, { preprocessMarkdownCallouts } from './extensions/callout';
 import Toggle from './extensions/toggle';
 import BlockDirection from './extensions/blockDirection';
+import BlockOutline from './extensions/outline';
 import { createBubbleMenu } from './bubbleMenu';
 import { createBlockHandle } from './blockHandle';
 import { splitFrontmatter, frontmatterInfo } from './frontmatter';
@@ -115,6 +116,7 @@ export function createEditor(
       Callout,
       Toggle,
       BlockDirection,
+      BlockOutline,
       GlobalDragHandle.configure({ dragHandleWidth: 48 }),
     ],
     content: body,

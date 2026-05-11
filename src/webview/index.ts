@@ -5,6 +5,7 @@ import { createEditor, updateContent, createSourceEditor, updateSourceContent, g
 import { initTheme, applyTheme, ThemeSetting } from './theme';
 import { initTooltips } from './tooltip';
 import { buildHtmlExport } from './exportHtml';
+import { createOutlinePanel, OutlinePanel } from './outlinePanel';
 import { common, createLowlight } from 'lowlight';
 
 const lowlight = createLowlight(common);
@@ -66,6 +67,7 @@ interface SavedDefaults {
   alwaysDarkSource?: boolean;
   sourceFullWidth?: boolean;
   shortenCodeSnippets?: boolean;
+  outlineVisible?: boolean;
 }
 interface InitMessage   { type: 'init';   markdown: string; defaults: SavedDefaults; mediaBaseUri?: string; }
 interface UpdateMessage { type: 'update'; markdown: string; }
@@ -232,6 +234,8 @@ function init(): void {
     }
 
     sourceMode = targetSource;
+    document.documentElement.classList.toggle('source-mode-active', sourceMode);
+    document.getElementById('toolbar')?.classList.toggle('source-active', sourceMode);
     segActivate(viewBtns, 'view', mode);
 
     // Tear down any floating editor UI so it doesn't bleed across views
@@ -751,13 +755,39 @@ function init(): void {
       savedDefaults = { ...FACTORY_DEFAULTS, ...(msg.defaults ?? {}) };
       applyDefaults(msg.defaults ?? {});
       refreshDefaultsButtons();
-      createEditor(editorEl, msg.markdown, (markdown) => {
+      const editorInstance = createEditor(editorEl, msg.markdown, (markdown) => {
         currentMarkdown = markdown;
         lastSentMarkdown = normalizeMd(markdown);
         if (sourceMode && sourceEditorReady) updateSourceContent(markdown);
         vscode.postMessage({ type: 'edit', markdown });
       });
       editorReady = true;
+
+      try {
+        const outlineBtn   = document.getElementById('outline-btn') as HTMLElement | null;
+        const outlinePanel = document.getElementById('outline-panel') as HTMLElement | null;
+        if (outlineBtn && outlinePanel) {
+          const outline: OutlinePanel = createOutlinePanel({
+            editor: editorInstance,
+            panelEl: outlinePanel,
+            toggleBtn: outlineBtn,
+            initialVisible: Boolean(msg.defaults?.outlineVisible),
+            onVisibilityChange: (visible) => {
+              vscode.postMessage({ type: 'saveOutlineVisible', value: visible });
+            },
+          });
+          outlineBtn.addEventListener('click', () => outline.toggle());
+          document.addEventListener('keydown', (e) => {
+            const mod = e.metaKey || e.ctrlKey;
+            if (mod && e.shiftKey && (e.key === 'o' || e.key === 'O')) {
+              e.preventDefault();
+              outline.toggle();
+            }
+          });
+        }
+      } catch (err) {
+        console.error('[md-editor-plus] outline init failed', err);
+      }
     }
 
     if (msg.type === 'update' && editorReady) {

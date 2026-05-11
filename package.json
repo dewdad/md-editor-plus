@@ -131,6 +131,11 @@
           "type": "boolean",
           "default": false,
           "description": "Collapse long code snippets to a preview with a Show more button"
+        },
+        "mdEditorPlus.outlineVisible": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the outline panel (left gutter) by default"
         }
       }
     }

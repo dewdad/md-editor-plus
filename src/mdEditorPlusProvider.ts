@@ -118,6 +118,7 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
           alwaysDarkSource:    cfg.get<boolean>('alwaysDarkSource', false),
           sourceFullWidth:     cfg.get<boolean>('sourceFullWidth', false),
           shortenCodeSnippets: cfg.get<boolean>('shortenCodeSnippets', false),
+          outlineVisible:      cfg.get<boolean>('outlineVisible', false),
         },
       });
     };
@@ -193,6 +194,13 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
       if (msg.type === 'copyFilePath') {
         await vscode.env.clipboard.writeText(document.uri.fsPath);
         await vscode.window.showInformationMessage('File path copied to clipboard');
+      }
+      if (msg.type === 'saveOutlineVisible') {
+        const value = (msg as unknown as { value?: unknown }).value;
+        if (typeof value !== 'boolean') return;
+        const cfg = vscode.workspace.getConfiguration('mdEditorPlus');
+        await cfg.update('outlineVisible', value, vscode.ConfigurationTarget.Global);
+        return;
       }
       if (msg.type === 'exportPdf') {
         const html = (msg as unknown as { html?: unknown }).html;
@@ -331,6 +339,7 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
     const iAa = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M90.86,50.89a12,12,0,0,0-21.72,0l-64,136a12,12,0,0,0,21.71,10.22L42.44,164h75.12l15.58,33.11a12,12,0,0,0,21.72-10.22ZM53.74,140,80,84.18,106.27,140ZM200,84c-13.85,0-24.77,3.86-32.45,11.48a12,12,0,1,0,16.9,17c3-3,8.26-4.52,15.55-4.52,11,0,20,7.18,20,16v4.39A47.28,47.28,0,0,0,200,124c-24.26,0-44,17.94-44,40s19.74,40,44,40a47.18,47.18,0,0,0,22-5.38A12,12,0,0,0,244,192V124C244,101.94,224.26,84,200,84Zm0,96c-11,0-20-7.18-20-16s9-16,20-16,20,7.18,20,16S211,180,200,180Z"/></svg>`;
     const iFolder = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M228,104a12,12,0,0,1-24,0V69l-59.51,59.51a12,12,0,0,1-17-17L187,52H152a12,12,0,0,1,0-24h64a12,12,0,0,1,12,12Zm-44,24a12,12,0,0,0-12,12v64H52V84h64a12,12,0,0,0,0-24H48A20,20,0,0,0,28,80V208a20,20,0,0,0,20,20H176a20,20,0,0,0,20-20V140A12,12,0,0,0,184,128Z"/></svg>`;
     const iDownload = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M228,148v56a12,12,0,0,1-12,12H40a12,12,0,0,1-12-12V148a12,12,0,0,1,24,0v44H204V148a12,12,0,0,1,24,0ZM119.51,156.49a12,12,0,0,0,17,0l40-40a12,12,0,0,0-17-17L140,123V40a12,12,0,0,0-24,0v83L96.49,99.51a12,12,0,0,0-17,17Z"/></svg>`;
+    const iOutline = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" viewBox="0 0 256 256"><line x1="40" y1="64" x2="60" y2="64"/><line x1="100" y1="64" x2="216" y2="64"/><line x1="80" y1="128" x2="100" y2="128"/><line x1="140" y1="128" x2="216" y2="128"/><line x1="80" y1="192" x2="100" y2="192"/><line x1="140" y1="192" x2="216" y2="192"/></svg>`;
     const iPdf = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M48,28A20,20,0,0,0,28,48V208a20,20,0,0,0,20,20H208a20,20,0,0,0,20-20V96a12,12,0,0,0-3.51-8.49l-56-56A12,12,0,0,0,160,28Zm4,24h96V96a12,12,0,0,0,12,12h44V204H52ZM168,57l27,27H168ZM112,160v8h8a12,12,0,0,1,0,24h-8v8a12,12,0,0,1-24,0V148a12,12,0,0,1,12-12h20a12,12,0,0,1,0,24Zm68,12a40,40,0,0,1-40,40h-4a12,12,0,0,1-12-12V148a12,12,0,0,1,12-12h4A40,40,0,0,1,180,176Zm-24-4a16,16,0,0,0-8-13.86V178a16,16,0,0,0,8-6Z"/></svg>`;
     const iDevices = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M224,72H212V64a28,28,0,0,0-28-28H40A28,28,0,0,0,12,64v88a28,28,0,0,0,28,28h96v12a28,28,0,0,0,28,28h60a28,28,0,0,0,28-28V100A28,28,0,0,0,224,72ZM40,156a4,4,0,0,1-4-4V64a4,4,0,0,1,4-4H184a4,4,0,0,1,4,4v8H164a28,28,0,0,0-28,28v56Zm188,36a4,4,0,0,1-4,4H164a4,4,0,0,1-4-4V100a4,4,0,0,1,4-4h60a4,4,0,0,1,4,4ZM124,208a12,12,0,0,1-12,12H88a12,12,0,0,1,0-24h24A12,12,0,0,1,124,208Zm88-84a12,12,0,0,1-12,12H188a12,12,0,0,1,0-24h12A12,12,0,0,1,212,124Z"/></svg>`;
     const iArrowsH = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M240.49,136.49l-32,32a12,12,0,0,1-17-17L203,140H53l11.52,11.51a12,12,0,0,1-17,17l-32-32a12,12,0,0,1,0-17l32-32a12,12,0,1,1,17,17L53,116H203l-11.52-11.51a12,12,0,0,1,17-17l32,32A12,12,0,0,1,240.49,136.49Z"/></svg>`;
@@ -362,6 +371,7 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
       <button class="seg-btn active" data-view="preview" data-tip="Notion view — rich rendering">${iEye}<span class="seg-label">Preview</span></button>
       <button class="seg-btn" data-view="source" data-tip="Source view — raw markdown">${iCode}<span class="seg-label">Code</span><span class="fm-badge hidden" id="fm-badge" aria-hidden="true"></span></button>
     </div>
+    <button class="toolbar-icon" id="outline-btn" data-tip="Outline (⌘⇧O)">${iOutline}</button>
     <span class="toolbar-filename" id="toolbar-filename" title="${fileName}">${fileName}</span>
     <span class="toolbar-spacer"></span>
     <button class="toolbar-icon" id="settings-btn" data-tip="Display settings">${iAa}</button>
@@ -472,6 +482,7 @@ export class MdEditorPlusProvider implements vscode.CustomTextEditorProvider {
     <button class="settings-action act-finder" data-tip="Reveal this file in your OS file browser">${iFolder}<span class="settings-action-label">Open in Finder</span></button>
     <button class="settings-action act-export-menu" data-submenu="export">${iDownload}<span class="settings-action-label">Export</span><span class="settings-action-caret">›</span></button>
   </div>
+  <div class="outline-panel hidden" id="outline-panel"></div>
   <div class="actions-submenu hidden" id="actions-submenu-export" role="menu">
     <button class="settings-action act-export-html" data-tip="Save the rendered view as a standalone HTML file">${iDownload}<span class="settings-action-label">Export to HTML</span></button>
     <button class="settings-action act-export-pdf" data-tip="Render to PDF — uses headless Chrome/Edge if installed, otherwise opens the system print dialog">${iPdf}<span class="settings-action-label">Export to PDF</span></button>
