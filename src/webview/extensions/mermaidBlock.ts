@@ -57,7 +57,8 @@ export function preprocessMermaidBlocks(markdown: string): string {
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;')
+      .replace(/\n/g, '&#10;');
     out.push(
       `<div data-mermaid-block data-code="${escaped}"></div>`,
       '',
@@ -82,11 +83,10 @@ const MermaidBlock = Node.create({
       code: {
         default: '',
         parseHTML: (element) => {
-          const raw = element.getAttribute('data-code') ?? '';
-          // Unescape HTML entities
-          const txt = document.createElement('textarea');
-          txt.innerHTML = raw;
-          return txt.value;
+          // getAttribute() already returns the decoded attribute value
+          // (the browser's HTML parser decodes entities like &lt; → <).
+          // No additional decoding step is needed.
+          return element.getAttribute('data-code') ?? '';
         },
         renderHTML: (attrs) => ({ 'data-code': attrs.code }),
       },

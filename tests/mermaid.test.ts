@@ -121,4 +121,37 @@ describe('mermaid preprocessing', () => {
     // Should still process (treat EOF as end of block)
     expect(result).toContain('data-mermaid-block');
   });
+
+  it('encodes newlines so markdown-it does not break attribute', () => {
+    const input = '```mermaid\nsequenceDiagram\n    Alice->>Bob: Hi\n```';
+    const result = preprocessMermaidBlocks(input);
+    // Newlines must be encoded as &#10; to prevent markdown-it from
+    // splitting the HTML block at blank/indented lines
+    expect(result).not.toContain('\n    Alice');
+    expect(result).toContain('&#10;');
+    // The div must be a single-line HTML block
+    const divLine = result.split('\n').find(l => l.includes('data-mermaid-block'));
+    expect(divLine).toContain('sequenceDiagram');
+    expect(divLine).toContain('Alice-&gt;&gt;Bob');
+  });
+
+  it('preserves sequence diagram with blank lines between sections', () => {
+    const input = [
+      '```mermaid',
+      'sequenceDiagram',
+      '    participant C as Consultant',
+      '    participant A as Agent',
+      '',
+      '    C->>A: Hello<br>world',
+      '    A-->>C: Done',
+      '```',
+    ].join('\n');
+    const result = preprocessMermaidBlocks(input);
+    expect(result).toContain('data-mermaid-block');
+    // The blank line inside the code must become &#10;&#10; not a literal blank line
+    expect(result).toContain('&#10;&#10;');
+    // Entire div on one line
+    const lines = result.split('\n').filter(l => l.includes('data-mermaid-block'));
+    expect(lines).toHaveLength(1);
+  });
 });
