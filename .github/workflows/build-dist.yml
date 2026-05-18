@@ -1,0 +1,132 @@
+name: Build VSIX Distribution
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run compile
+
+      - name: Package VSIX
+        run: npx @vscode/vsce package --no-git-tag-version --out md-editor-plus.vsix
+
+      - name: Push to dist branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          VERSION=$(node -p "require('./package.json').version")
+          SHA=$(git rev-parse --short HEAD)
+          DATE=$(date -u +"%Y-%m-%d %H:%M UTC")
+
+          mkdir -p /tmp/dist-stage
+
+          # Copy VSIX artifacts
+          cp md-editor-plus.vsix "/tmp/dist-stage/md-editor-plus-${VERSION}.vsix"
+          cp md-editor-plus.vsix "/tmp/dist-stage/md-editor-plus-latest.vsix"
+
+          # Copy installer scripts
+          cp .github/install.sh /tmp/dist-stage/install.sh
+          cp .github/install.ps1 /tmp/dist-stage/install.ps1
+          chmod +x /tmp/dist-stage/install.sh
+
+          # Generate README — dynamic header
+          cat > /tmp/dist-stage/README.md <<EOF
+          # MD Editor Plus — Pre-built VSIX
+
+          > **v${VERSION}** · built from \`${SHA}\` · ${DATE}
+
+          EOF
+
+          # Generate README — static body (no variable expansion)
+          cat >> /tmp/dist-stage/README.md <<'BODY'
+          Auto-built distribution branch. Install the extension on any VSCode-based IDE.
+
+          ## Quick Install (recommended)
+
+          Detects all VSCode IDEs on your system and lets you choose which ones to install to.
+
+          ### macOS / Linux
+
+          ```bash
+          curl -fsSL https://github.com/dewdad/md-editor-plus/raw/dist/install.sh | bash
+          ```
+
+          Install to **all** detected IDEs without prompting:
+
+          ```bash
+          curl -fsSL https://github.com/dewdad/md-editor-plus/raw/dist/install.sh | bash -s -- --all
+          ```
+
+          ### Windows (PowerShell)
+
+          ```powershell
+          irm https://github.com/dewdad/md-editor-plus/raw/dist/install.ps1 | iex
+          ```
+
+          Install to **all** detected IDEs without prompting:
+
+          ```powershell
+          & ([scriptblock]::Create((irm https://github.com/dewdad/md-editor-plus/raw/dist/install.ps1))) -All
+          ```
+
+          ### Windows (Git Bash / WSL)
+
+          ```bash
+          curl -fsSL https://github.com/dewdad/md-editor-plus/raw/dist/install.sh | bash
+          ```
+
+          ## Supported IDEs
+
+          The installer automatically detects:
+
+          | IDE | CLI |
+          |-----|-----|
+          | Visual Studio Code | `code` |
+          | VS Code Insiders | `code-insiders` |
+          | VSCodium | `codium` |
+          | Cursor | `cursor` |
+          | Windsurf | `windsurf` |
+          | Positron | `positron` |
+          | Code - OSS | `code-oss` |
+
+          ## Manual Install
+
+          If you prefer to install manually:
+
+          ```bash
+          # Download
+          curl -LO https://github.com/dewdad/md-editor-plus/raw/dist/md-editor-plus-latest.vsix
+
+          # Install (replace 'code' with your IDE's CLI)
+          code --install-extension md-editor-plus-latest.vsix
+          ```
+          BODY
+
+          # Push to dist branch
+          cd /tmp/dist-stage
+          git init
+          git checkout -b dist
+          git add -A
+          git commit -m "dist: v${VERSION} (${SHA})"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git push --force origin dist
