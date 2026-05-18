@@ -125,6 +125,8 @@ jobs:
           # Push to dist branch
           cd /tmp/dist-stage
           git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b dist
           git add -A
           git commit -m "dist: v${VERSION} (${SHA})"
